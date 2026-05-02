@@ -1,0 +1,58 @@
+import { Square, Play } from 'lucide-react';
+import type { WritingTask } from '../types';
+import { Timer } from './Timer';
+import { TaskButton } from './TaskButton';
+
+type SidebarProps = {
+  tasks: WritingTask[];
+  activeTaskId: number;
+  timeRemaining: number;
+  timerState: 'normal' | 'warning' | 'urgent';
+  hasStarted: boolean;
+  isLocked: boolean;
+  onSelectTask: (taskId: WritingTask['id']) => void;
+  onStart: () => void;
+  onEnd: () => void;
+};
+
+export function Sidebar({
+  tasks,
+  activeTaskId,
+  timeRemaining,
+  timerState,
+  hasStarted,
+  isLocked,
+  onSelectTask,
+  onStart,
+  onEnd,
+}: SidebarProps) {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-top">
+        <Timer seconds={timeRemaining} state={timerState} />
+        {!hasStarted ? (
+          <button className="primary-action" type="button" onClick={onStart}>
+            <Play size={16} />
+            Start simulation
+          </button>
+        ) : (
+          <button className="secondary-action" type="button" onClick={onEnd} disabled={isLocked}>
+            <Square size={15} />
+            End
+          </button>
+        )}
+      </div>
+
+      <nav className="task-nav" aria-label="Writing tasks">
+        {tasks.map((task) => (
+          <TaskButton
+            key={task.id}
+            task={task}
+            isActive={task.id === activeTaskId}
+            onClick={() => onSelectTask(task.id)}
+          />
+        ))}
+      </nav>
+    </aside>
+  );
+}
