@@ -13,8 +13,8 @@ export function TaskDescription({ task }: TaskDescriptionProps) {
           <h1 id="task-heading">{task.title}</h1>
         </div>
         <div className="task-requirements">
-          <span>{task.minWords}-{task.maxWords} words</span>
-          <span>{task.suggestedMinutes} min suggested</span>
+          <span>{task.minWords}-{task.maxWords} mots</span>
+          <span>{task.suggestedMinutes} min suggérées</span>
         </div>
       </div>
 

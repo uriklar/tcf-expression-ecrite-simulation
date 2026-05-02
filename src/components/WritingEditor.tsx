@@ -19,12 +19,12 @@ export function WritingEditor({ task, disabled, disabledMessage, editorRef, onCh
     <section className="writing-editor" aria-labelledby="editor-heading">
       <div className="editor-toolbar">
         <div>
-          <p className="eyebrow">Response</p>
-          <h2 id="editor-heading">Write your answer</h2>
+          <p className="eyebrow">Réponse</p>
+          <h2 id="editor-heading">Rédigez votre réponse</h2>
         </div>
         <div className="word-count">
           <strong>{wordCount}</strong>
-          <span>words</span>
+          <span>mots</span>
         </div>
       </div>
 
@@ -37,14 +37,14 @@ export function WritingEditor({ task, disabled, disabledMessage, editorRef, onCh
         autoCorrect="off"
         autoCapitalize="off"
         autoComplete="off"
-        aria-label={`${task.title} response`}
-        placeholder={disabled ? disabledMessage : 'Type your response in French...'}
+        aria-label={`Réponse à la ${task.title.toLowerCase()}`}
+        placeholder={disabled ? disabledMessage : 'Rédigez votre réponse en français...'}
       />
 
       <div className="editor-feedback" aria-live="polite">
-        {disabled ? <span className="feedback-locked">Writing is locked.</span> : null}
-        {isBelowMin ? <span className="feedback-warning">Below minimum word count.</span> : null}
-        {isAboveMax ? <span className="feedback-neutral">Above recommended word count.</span> : null}
+        {disabled ? <span className="feedback-locked">La rédaction est verrouillée.</span> : null}
+        {isBelowMin ? <span className="feedback-warning">Nombre de mots inférieur au minimum.</span> : null}
+        {isAboveMax ? <span className="feedback-warning">Nombre de mots supérieur au maximum.</span> : null}
       </div>
     </section>
   );

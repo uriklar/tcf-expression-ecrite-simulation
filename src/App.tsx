@@ -61,7 +61,8 @@ export default function App() {
         <>
           {isLocked ? (
             <div className="final-banner" role="status">
-              Time is over. Your responses are locked, and final word counts are shown in the task list.
+              Le temps est écoulé. Vos réponses sont verrouillées et les nombres de mots finaux sont affichés dans la
+              liste des tâches.
             </div>
           ) : null}
           <ResizeSplit
@@ -70,7 +71,9 @@ export default function App() {
               <WritingEditor
                 task={activeTask}
                 disabled={isEditorDisabled}
-                disabledMessage={isLocked ? 'The simulation has ended.' : 'Start the simulation to begin writing.'}
+                disabledMessage={
+                  isLocked ? 'La simulation est terminée.' : 'Commencez la simulation pour rédiger votre réponse.'
+                }
                 editorRef={editorRef}
                 onChange={(answer) => updateAnswer(activeTask.id, answer)}
               />

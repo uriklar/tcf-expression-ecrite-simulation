@@ -9,15 +9,16 @@ type TaskButtonProps = {
 };
 
 const statusCopy: Record<TaskStatus, string> = {
-  'not-started': 'Not started',
-  incomplete: 'Below minimum',
-  complete: 'Minimum reached',
+  'not-started': 'Non commencée',
+  incomplete: 'Sous le minimum',
+  complete: 'Minimum atteint',
+  'over-limit': 'Au-dessus du maximum',
 };
 
 export function TaskButton({ task, isActive, onClick }: TaskButtonProps) {
   const wordCount = countWords(task.answer);
-  const status = getTaskStatus(wordCount, task.minWords);
-  const StatusIcon = status === 'complete' ? CheckCircle2 : status === 'incomplete' ? CircleAlert : Circle;
+  const status = getTaskStatus(wordCount, task.minWords, task.maxWords);
+  const StatusIcon = status === 'complete' ? CheckCircle2 : status === 'not-started' ? Circle : CircleAlert;
 
   return (
     <button className={`task-button ${isActive ? 'active' : ''}`} type="button" onClick={onClick}>
@@ -27,7 +28,7 @@ export function TaskButton({ task, isActive, onClick }: TaskButtonProps) {
       <span className="task-button-copy">
         <span className="task-button-title">{task.title}</span>
         <span className="task-button-meta">
-          {wordCount} words · {statusCopy[status]}
+          {wordCount} mots · {statusCopy[status]}
         </span>
       </span>
     </button>

@@ -17,10 +17,10 @@ export function VirtualKeyboard({ isUppercase, disabled, onToggleCase, onInsert 
     <aside className="keyboard-panel">
       <div className="keyboard-header">
         <div>
-          <p className="eyebrow">Input</p>
+          <p className="eyebrow">Saisie</p>
           <h2>
             <Keyboard size={18} />
-            French accents
+            Accents français
           </h2>
         </div>
         <button
@@ -28,13 +28,13 @@ export function VirtualKeyboard({ isUppercase, disabled, onToggleCase, onInsert 
           type="button"
           onClick={onToggleCase}
           aria-pressed={isUppercase}
-          title="Toggle uppercase accents"
+          title="Basculer les accents en majuscules"
         >
           <CaseSensitive size={17} />
         </button>
       </div>
 
-      <div className="accent-grid" aria-label="French special characters">
+      <div className="accent-grid" aria-label="Caractères spéciaux français">
         {keys.map((key) => (
           <button
             key={key}

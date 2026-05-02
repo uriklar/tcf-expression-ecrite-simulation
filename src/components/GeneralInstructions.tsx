@@ -40,7 +40,7 @@ export function GeneralInstructions({ onStart }: GeneralInstructionsProps) {
 
         <button className="primary-action instructions-start" type="button" onClick={onStart}>
           <Play size={18} />
-          Start
+          Commencer
         </button>
       </section>
     </main>

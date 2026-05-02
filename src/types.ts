@@ -1,4 +1,4 @@
-export type TaskStatus = 'not-started' | 'incomplete' | 'complete';
+export type TaskStatus = 'not-started' | 'incomplete' | 'complete' | 'over-limit';
 
 export type WritingTask = {
   id: 1 | 2 | 3;

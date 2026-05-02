@@ -33,17 +33,17 @@ export function Sidebar({
         {!hasStarted ? (
           <button className="primary-action" type="button" onClick={onStart}>
             <Play size={16} />
-            Start simulation
+            Commencer la simulation
           </button>
         ) : (
           <button className="secondary-action" type="button" onClick={onEnd} disabled={isLocked}>
             <Square size={15} />
-            End
+            Terminer
           </button>
         )}
       </div>
 
-      <nav className="task-nav" aria-label="Writing tasks">
+      <nav className="task-nav" aria-label="Tâches d’expression écrite">
         {tasks.map((task) => (
           <TaskButton
             key={task.id}

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { initialTasks } from '../data/tasks';
+import { createInitialTasks } from '../data/tasks';
 import type { WritingTask } from '../types';
 
 export function useWritingTasks() {
-  const [tasks, setTasks] = useState<WritingTask[]>(initialTasks);
+  const [tasks, setTasks] = useState<WritingTask[]>(createInitialTasks);
   const [activeTaskId, setActiveTaskId] = useState<WritingTask['id']>(1);
 
   const activeTask = useMemo(

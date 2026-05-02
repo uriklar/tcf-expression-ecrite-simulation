@@ -12,7 +12,7 @@ function formatTime(seconds: number): string {
 export function Timer({ seconds, state }: TimerProps) {
   return (
     <div className={`timer timer-${state}`} aria-live="polite">
-      <span className="timer-label">Time remaining</span>
+      <span className="timer-label">Temps restant</span>
       <span className="timer-value">{formatTime(seconds)}</span>
     </div>
   );
