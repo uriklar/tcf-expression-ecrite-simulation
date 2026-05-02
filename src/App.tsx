@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GeneralInstructions } from './components/GeneralInstructions';
 import { Layout } from './components/Layout';
 import { ResizeSplit } from './components/ResizeSplit';
 import { Sidebar } from './components/Sidebar';
@@ -19,7 +20,7 @@ export default function App() {
 
   useEffect(() => {
     editorRef.current?.focus();
-  }, [activeTaskId, editorRef]);
+  }, [activeTaskId, editorRef, hasStarted]);
 
   function handleInsert(character: string) {
     const editor = editorRef.current;
@@ -35,6 +36,10 @@ export default function App() {
       editor.focus();
       editor.setSelectionRange(nextCursor, nextCursor);
     });
+  }
+
+  if (!hasStarted) {
+    return <GeneralInstructions onStart={start} />;
   }
 
   return (

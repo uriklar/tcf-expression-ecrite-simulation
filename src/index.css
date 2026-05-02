@@ -217,6 +217,62 @@ button:disabled {
   font-weight: 600;
 }
 
+.instructions-screen {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 42px 28px;
+}
+
+.instructions-content {
+  display: grid;
+  width: min(100%, 980px);
+  gap: 34px;
+}
+
+.instructions-header {
+  display: grid;
+  gap: 8px;
+}
+
+.instructions-header h1 {
+  margin: 0;
+  color: #111827;
+  font-size: 32px;
+  line-height: 1.15;
+}
+
+.instructions-body {
+  color: #1f2937;
+  font-size: 25px;
+  line-height: 1.48;
+}
+
+.instructions-body p {
+  margin: 0 0 22px;
+}
+
+.instructions-body ul {
+  display: grid;
+  gap: 24px;
+  margin: 0;
+  padding-left: 34px;
+}
+
+.instructions-body li {
+  padding-left: 8px;
+}
+
+.instructions-body strong {
+  color: #111827;
+}
+
+.instructions-start {
+  width: fit-content;
+  min-width: 136px;
+  min-height: 44px;
+  padding-inline: 18px;
+}
+
 .split {
   min-height: 0;
   flex: 1;
@@ -484,6 +540,28 @@ textarea:disabled {
 }
 
 @media (max-width: 720px) {
+  .instructions-screen {
+    padding: 28px 20px;
+  }
+
+  .instructions-content {
+    gap: 24px;
+  }
+
+  .instructions-header h1 {
+    font-size: 27px;
+  }
+
+  .instructions-body {
+    font-size: 19px;
+    line-height: 1.45;
+  }
+
+  .instructions-body ul {
+    gap: 18px;
+    padding-left: 24px;
+  }
+
   .app-shell {
     display: flex;
     min-height: 100vh;
