@@ -17,11 +17,18 @@ export function useWritingTasks() {
     );
   }
 
+  function updateTaskAI(taskId: WritingTask['id'], updates: Partial<WritingTask>) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) => (task.id === taskId ? { ...task, ...updates } : task)),
+    );
+  }
+
   return {
     tasks,
     activeTask,
     activeTaskId,
     setActiveTaskId,
     updateAnswer,
+    updateTaskAI,
   };
 }

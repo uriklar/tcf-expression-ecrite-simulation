@@ -1,4 +1,5 @@
 import { Square, Play } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { WritingTask } from '../types';
 import { Timer } from './Timer';
 import { TaskButton } from './TaskButton';
@@ -10,6 +11,7 @@ type SidebarProps = {
   timerState: 'normal' | 'warning' | 'urgent';
   hasStarted: boolean;
   isLocked: boolean;
+  children?: ReactNode;
   onSelectTask: (taskId: WritingTask['id']) => void;
   onStart: () => void;
   onEnd: () => void;
@@ -22,6 +24,7 @@ export function Sidebar({
   timerState,
   hasStarted,
   isLocked,
+  children,
   onSelectTask,
   onStart,
   onEnd,
@@ -53,6 +56,7 @@ export function Sidebar({
           />
         ))}
       </nav>
+      {children}
     </aside>
   );
 }
