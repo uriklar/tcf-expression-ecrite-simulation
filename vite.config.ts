@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { handleGradeRequest, handleSuggestRequest } from './api/ai/_handlers';
-import { readJsonBody, sendJson, type JsonRequest, type JsonResponse } from './api/ai/_http';
+import { handleGradeRequest, handleSuggestRequest } from './api/ai/_handlers.js';
+import { readBearerToken, readJsonBody, sendJson, type JsonRequest, type JsonResponse } from './api/ai/_http.js';
 
 export default defineConfig({
   plugins: [
@@ -17,10 +17,11 @@ export default defineConfig({
 
           try {
             const body = await readJsonBody(request as JsonRequest);
+            const apiKey = readBearerToken(request.headers.authorization);
             const result =
               request.url === '/api/ai/grade'
-                ? await handleGradeRequest(request.method, body)
-                : await handleSuggestRequest(request.method, body);
+                ? await handleGradeRequest(request.method, body, apiKey)
+                : await handleSuggestRequest(request.method, body, apiKey);
 
             sendJson(response as JsonResponse, result.status, result.body);
           } catch {

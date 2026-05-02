@@ -11,7 +11,6 @@ export type AISettings = {
   apiKey: string;
   model: string;
   feedbackLanguage: FeedbackLanguage;
-  rememberToken: boolean;
 };
 
 export type GradingResult = {

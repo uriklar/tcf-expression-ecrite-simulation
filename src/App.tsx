@@ -14,6 +14,58 @@ import { useWritingTasks } from './hooks/useWritingTasks';
 import type { GradingResult, SuggestionMode, SuggestionResult, WritingTask } from './types';
 import { insertAtCursor } from './utils/insertAtCursor';
 
+type AIApiResponse<Result> = {
+  result?: Result;
+  error?: string;
+};
+
+async function readAIApiResponse<Result>(response: Response, fallbackError: string) {
+  const responseText = await response.text();
+  const body = parseAIApiResponse<Result>(responseText);
+
+  if (!response.ok || !body?.result) {
+    throw new Error(body?.error || readablePlatformError(responseText) || fallbackError);
+  }
+
+  return body.result;
+}
+
+function parseAIApiResponse<Result>(responseText: string): AIApiResponse<Result> | undefined {
+  if (!responseText.trim()) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(responseText) as AIApiResponse<Result>;
+  } catch {
+    return undefined;
+  }
+}
+
+function readablePlatformError(responseText: string) {
+  if (!responseText.trim()) {
+    return undefined;
+  }
+
+  const lines = responseText
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.includes('FUNCTION_INVOCATION_FAILED')) {
+    const requestId = lines.find((line) => /^[a-z0-9]+::/i.test(line));
+    return `The production AI API failed on the server (FUNCTION_INVOCATION_FAILED${
+      requestId ? `, request ${requestId}` : ''
+    }). Check the Vercel function logs.`;
+  }
+
+  if (lines[0] && !lines[0].startsWith('<')) {
+    return lines[0];
+  }
+
+  return undefined;
+}
+
 export default function App() {
   const { tasks, activeTask, activeTaskId, setActiveTaskId, updateAnswer, updateTaskAI } = useWritingTasks();
   const { settings: aiSettings, providerModels, updateSettings, clearSavedToken } = useAISettings();
@@ -72,23 +124,21 @@ export default function App() {
     try {
       const response = await fetch('/api/ai/grade', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${aiSettings.apiKey}`,
+        },
         body: JSON.stringify({
           provider: aiSettings.provider,
-          apiKey: aiSettings.apiKey,
           model: aiSettings.model,
           feedbackLanguage: aiSettings.feedbackLanguage,
           task: getAIContextTask(activeTask),
           answer: activeTask.answer,
         }),
       });
-      const body = (await response.json()) as { result?: GradingResult; error?: string };
+      const result = await readAIApiResponse<GradingResult>(response, 'Could not grade this answer.');
 
-      if (!response.ok || !body.result) {
-        throw new Error(body.error || 'Could not grade this answer.');
-      }
-
-      updateTaskAI(activeTask.id, { aiStatus: 'idle', aiError: undefined, gradingResult: body.result });
+      updateTaskAI(activeTask.id, { aiStatus: 'idle', aiError: undefined, gradingResult: result });
     } catch (error) {
       updateTaskAI(activeTask.id, {
         aiStatus: 'error',
@@ -119,10 +169,12 @@ export default function App() {
     try {
       const response = await fetch('/api/ai/suggest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${aiSettings.apiKey}`,
+        },
         body: JSON.stringify({
           provider: aiSettings.provider,
-          apiKey: aiSettings.apiKey,
           model: aiSettings.model,
           feedbackLanguage: aiSettings.feedbackLanguage,
           mode,
@@ -130,13 +182,9 @@ export default function App() {
           answer: activeTask.answer,
         }),
       });
-      const body = (await response.json()) as { result?: SuggestionResult; error?: string };
+      const result = await readAIApiResponse<SuggestionResult>(response, 'Could not generate a suggestion.');
 
-      if (!response.ok || !body.result) {
-        throw new Error(body.error || 'Could not generate a suggestion.');
-      }
-
-      updateTaskAI(activeTask.id, { aiStatus: 'idle', aiError: undefined, suggestionResult: body.result });
+      updateTaskAI(activeTask.id, { aiStatus: 'idle', aiError: undefined, suggestionResult: result });
     } catch (error) {
       updateTaskAI(activeTask.id, {
         aiStatus: 'error',

@@ -12,6 +12,15 @@ export type JsonResponse = ServerResponse & {
 
 export async function readJsonBody(request: JsonRequest) {
   if (request.body !== undefined) {
+    if (typeof request.body === 'string') {
+      return request.body.trim() ? JSON.parse(request.body) : undefined;
+    }
+
+    if (Buffer.isBuffer(request.body)) {
+      const text = request.body.toString('utf8');
+      return text.trim() ? JSON.parse(text) : undefined;
+    }
+
     return request.body;
   }
 
@@ -28,9 +37,17 @@ export async function readJsonBody(request: JsonRequest) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
+export function readBearerToken(authorization: string | string[] | undefined) {
+  const value = Array.isArray(authorization) ? authorization[0] : authorization;
+  const match = value?.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || undefined;
+}
+
 export function sendJson(response: JsonResponse, status: number, body: unknown) {
   const statusFn = response.status;
   const jsonFn = response.json;
+
+  response.setHeader('Cache-Control', 'no-store');
 
   if (typeof statusFn === 'function' && typeof jsonFn === 'function') {
     statusFn.call(response, status);
@@ -41,4 +58,21 @@ export function sendJson(response: JsonResponse, status: number, body: unknown) 
   response.statusCode = status;
   response.setHeader('Content-Type', 'application/json');
   response.end(JSON.stringify(body));
+}
+
+export function toLoggableError(error: unknown, secrets: string[] = []) {
+  const redact = (value: string) =>
+    secrets
+      .filter(Boolean)
+      .reduce((redacted, secret) => redacted.split(secret).join('[REDACTED_API_TOKEN]'), value);
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: redact(error.message),
+      stack: error.stack ? redact(error.stack) : undefined,
+    };
+  }
+
+  return { message: redact(String(error)) };
 }

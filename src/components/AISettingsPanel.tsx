@@ -87,17 +87,8 @@ export function AISettingsPanel({ settings, providerModels, onChange, onClearSav
           </select>
         </label>
 
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={settings.rememberToken}
-            onChange={(event) => onChange({ rememberToken: event.target.checked })}
-          />
-          <span>Remember token on this device</span>
-        </label>
-
         <button className="token-clear-button" type="button" onClick={onClearSavedToken}>
-          Clear saved token
+          Clear token
         </button>
       </div>
     </details>

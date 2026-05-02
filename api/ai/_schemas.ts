@@ -14,23 +14,22 @@ export const taskSchema = z.object({
 
 export const gradeRequestSchema = z.object({
   provider: aiProviderSchema,
-  apiKey: z.string().trim().min(1),
   model: z.string().trim().min(1),
   feedbackLanguage: feedbackLanguageSchema,
   task: taskSchema,
   answer: z.string().trim().min(1),
-});
+}).strict();
 
 export const suggestRequestSchema = z
   .object({
     provider: aiProviderSchema,
-    apiKey: z.string().trim().min(1),
     model: z.string().trim().min(1),
     feedbackLanguage: feedbackLanguageSchema,
     mode: suggestionModeSchema,
     task: taskSchema,
     answer: z.string().optional(),
   })
+  .strict()
   .refine((request) => request.mode === 'brand-new' || Boolean(request.answer?.trim()), {
     message: 'Answer is required for improve-original mode.',
     path: ['answer'],

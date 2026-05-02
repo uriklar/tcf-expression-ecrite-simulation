@@ -1,5 +1,6 @@
 import { generateObject } from 'ai';
-import { getModel } from './_providers';
+import { getModel } from './_providers.js';
+import { toLoggableError } from './_http.js';
 import {
   gradeRequestSchema,
   gradingResultSchema,
@@ -7,7 +8,7 @@ import {
   suggestionResultSchema,
   type GradeRequest,
   type SuggestRequest,
-} from './_schemas';
+} from './_schemas.js';
 
 type ApiHandlerResponse = {
   status: number;
@@ -17,9 +18,17 @@ type ApiHandlerResponse = {
 const genericGradeError = 'Could not grade this answer. Check your API token, provider, or model name.';
 const genericSuggestError = 'Could not generate a suggestion. Check your API token, provider, or model name.';
 
-export async function handleGradeRequest(method: string | undefined, body: unknown): Promise<ApiHandlerResponse> {
+export async function handleGradeRequest(
+  method: string | undefined,
+  body: unknown,
+  apiKey: string | undefined,
+): Promise<ApiHandlerResponse> {
   if (method !== 'POST') {
     return { status: 405, body: { error: 'Method not allowed.' } };
+  }
+
+  if (!apiKey) {
+    return { status: 401, body: { error: 'API token is required.' } };
   }
 
   const parsedRequest = gradeRequestSchema.safeParse(body);
@@ -29,7 +38,7 @@ export async function handleGradeRequest(method: string | undefined, body: unkno
   }
 
   try {
-    const request = parsedRequest.data;
+    const request = { ...parsedRequest.data, apiKey };
     const { object } = await generateObject({
       model: getModel(request),
       schema: gradingResultSchema,
@@ -38,14 +47,23 @@ export async function handleGradeRequest(method: string | undefined, body: unkno
     });
 
     return { status: 200, body: { result: object } };
-  } catch {
+  } catch (error) {
+    console.error('AI grade request failed', toLoggableError(error, [apiKey]));
     return { status: 502, body: { error: genericGradeError } };
   }
 }
 
-export async function handleSuggestRequest(method: string | undefined, body: unknown): Promise<ApiHandlerResponse> {
+export async function handleSuggestRequest(
+  method: string | undefined,
+  body: unknown,
+  apiKey: string | undefined,
+): Promise<ApiHandlerResponse> {
   if (method !== 'POST') {
     return { status: 405, body: { error: 'Method not allowed.' } };
+  }
+
+  if (!apiKey) {
+    return { status: 401, body: { error: 'API token is required.' } };
   }
 
   const parsedRequest = suggestRequestSchema.safeParse(body);
@@ -55,7 +73,7 @@ export async function handleSuggestRequest(method: string | undefined, body: unk
   }
 
   try {
-    const request = parsedRequest.data;
+    const request = { ...parsedRequest.data, apiKey };
     const { object } = await generateObject({
       model: getModel(request),
       schema: suggestionResultSchema,
@@ -67,7 +85,8 @@ export async function handleSuggestRequest(method: string | undefined, body: unk
     });
 
     return { status: 200, body: { result: object } };
-  } catch {
+  } catch (error) {
+    console.error('AI suggest request failed', toLoggableError(error, [apiKey]));
     return { status: 502, body: { error: genericSuggestError } };
   }
 }

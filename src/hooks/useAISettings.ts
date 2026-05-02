@@ -7,8 +7,6 @@ type SavedAISettings = {
   provider: AIProvider;
   model: string;
   feedbackLanguage: FeedbackLanguage;
-  rememberToken: boolean;
-  apiKeysByProvider?: Partial<Record<AIProvider, string>>;
 };
 
 const defaultModels: Record<AIProvider, string> = {
@@ -22,7 +20,6 @@ const defaultSettings: AISettings = {
   apiKey: '',
   model: defaultModels.openai,
   feedbackLanguage: 'english',
-  rememberToken: false,
 };
 
 function readSavedSettings(): SavedAISettings | null {
@@ -45,31 +42,17 @@ function toInitialSettings(): AISettings {
 
   return {
     provider,
-    apiKey: savedSettings.rememberToken ? savedSettings.apiKeysByProvider?.[provider] ?? '' : '',
+    apiKey: '',
     model: savedSettings.model || defaultModels[provider],
     feedbackLanguage: savedSettings.feedbackLanguage ?? defaultSettings.feedbackLanguage,
-    rememberToken: Boolean(savedSettings.rememberToken),
   };
 }
 
 function persistSettings(settings: AISettings) {
-  const savedSettings = readSavedSettings();
-  const apiKeysByProvider = { ...(savedSettings?.apiKeysByProvider ?? {}) };
-
-  if (settings.rememberToken) {
-    if (settings.apiKey) {
-      apiKeysByProvider[settings.provider] = settings.apiKey;
-    } else {
-      delete apiKeysByProvider[settings.provider];
-    }
-  }
-
   const nextSettings: SavedAISettings = {
     provider: settings.provider,
     model: settings.model,
     feedbackLanguage: settings.feedbackLanguage,
-    rememberToken: settings.rememberToken,
-    ...(settings.rememberToken && Object.keys(apiKeysByProvider).length > 0 ? { apiKeysByProvider } : {}),
   };
 
   window.localStorage.setItem(AI_SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
@@ -96,35 +79,19 @@ export function useAISettings() {
   function updateSettings(updates: Partial<AISettings>) {
     setSettings((currentSettings) => {
       const nextProvider = updates.provider ?? currentSettings.provider;
-      const savedSettings = readSavedSettings();
       const providerChanged = nextProvider !== currentSettings.provider;
-      const rememberToken = updates.rememberToken ?? currentSettings.rememberToken;
-      const savedProviderToken = rememberToken ? savedSettings?.apiKeysByProvider?.[nextProvider] ?? '' : '';
 
       return {
         ...currentSettings,
         ...updates,
         provider: nextProvider,
-        apiKey: updates.apiKey ?? (providerChanged ? savedProviderToken : currentSettings.apiKey),
+        apiKey: updates.apiKey ?? (providerChanged ? '' : currentSettings.apiKey),
         model: updates.model ?? (providerChanged ? defaultModels[nextProvider] : currentSettings.model),
       };
     });
   }
 
   function clearSavedToken() {
-    const savedSettings = readSavedSettings();
-    const nextApiKeys = { ...(savedSettings?.apiKeysByProvider ?? {}) };
-    delete nextApiKeys[settings.provider];
-
-    const nextSavedSettings: SavedAISettings = {
-      provider: settings.provider,
-      model: settings.model,
-      feedbackLanguage: settings.feedbackLanguage,
-      rememberToken: settings.rememberToken,
-      ...(settings.rememberToken ? { apiKeysByProvider: nextApiKeys } : {}),
-    };
-
-    window.localStorage.setItem(AI_SETTINGS_STORAGE_KEY, JSON.stringify(nextSavedSettings));
     setSettings((currentSettings) => ({ ...currentSettings, apiKey: '' }));
   }
 

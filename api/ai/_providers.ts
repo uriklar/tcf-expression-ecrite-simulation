@@ -2,9 +2,11 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
-import type { GradeRequest, SuggestRequest } from './_schemas';
+import type { GradeRequest, SuggestRequest } from './_schemas.js';
 
-type AIRequestSettings = Pick<GradeRequest | SuggestRequest, 'provider' | 'apiKey' | 'model'>;
+type AIRequestSettings = Pick<GradeRequest | SuggestRequest, 'provider' | 'model'> & {
+  apiKey: string;
+};
 
 export function getModel(settings: AIRequestSettings): LanguageModel {
   switch (settings.provider) {
