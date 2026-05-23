@@ -12,7 +12,9 @@ type TaskAdminPanelProps = {
   selectedTaskItemIds: TaskSelection;
   onSelectTaskItem: (taskId: TaskSlotId, taskItemId: string) => void;
   onRandomizeSelection: () => void;
-  onAddTask: (task: { taskId: TaskSlotId; prompt: string; documents?: TaskDocument[] }) => TaskBankItem;
+  onAddTask: (task: { taskId: TaskSlotId; prompt: string; documents?: TaskDocument[] }) => Promise<TaskBankItem>;
+  isLoading?: boolean;
+  error?: string;
 };
 
 function summarizePrompt(prompt: string) {
@@ -31,12 +33,15 @@ export function TaskAdminPanel({
   onSelectTaskItem,
   onRandomizeSelection,
   onAddTask,
+  isLoading,
+  error: loadError,
 }: TaskAdminPanelProps) {
   const [taskId, setTaskId] = useState<TaskSlotId>(1);
   const [prompt, setPrompt] = useState('');
   const [documentOne, setDocumentOne] = useState('');
   const [documentTwo, setDocumentTwo] = useState('');
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [previewTask, setPreviewTask] = useState<TaskBankItem | undefined>();
 
@@ -52,7 +57,7 @@ export function TaskAdminPanel({
     [taskBankItems],
   );
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!prompt.trim()) {
@@ -68,17 +73,25 @@ export function TaskAdminPanel({
           ].filter((document) => document.text.trim())
         : [];
 
-    const createdTask = onAddTask({
-      taskId,
-      prompt,
-      documents: documents.length ? documents : undefined,
-    });
-
-    onSelectTaskItem(createdTask.taskId, createdTask.id);
-    setPrompt('');
-    setDocumentOne('');
-    setDocumentTwo('');
+    setIsSaving(true);
     setError('');
+
+    try {
+      const createdTask = await onAddTask({
+        taskId,
+        prompt,
+        documents: documents.length ? documents : undefined,
+      });
+
+      onSelectTaskItem(createdTask.taskId, createdTask.id);
+      setPrompt('');
+      setDocumentOne('');
+      setDocumentTwo('');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Impossible d’enregistrer cette tâche.');
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -105,6 +118,9 @@ export function TaskAdminPanel({
           </button>
         </div>
       </div>
+
+      {isLoading ? <p className="task-bank-status">Chargement des tâches enregistrées...</p> : null}
+      {loadError ? <p className="task-bank-status task-bank-status-error">{loadError}</p> : null}
 
       <div className="task-picker-grid">
         {taskIds.map((currentTaskId) => {
@@ -190,9 +206,9 @@ export function TaskAdminPanel({
 
             {error ? <p className="form-error">{error}</p> : null}
 
-            <button className="primary-action" type="submit">
+            <button className="primary-action" type="submit" disabled={isSaving}>
               <Plus size={16} />
-              Ajouter
+              {isSaving ? 'Enregistrement...' : 'Ajouter'}
             </button>
           </form>
 

@@ -420,6 +420,23 @@ button:disabled {
   gap: 12px;
 }
 
+.task-bank-status {
+  margin: 0;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+  padding: 10px 12px;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.task-bank-status-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .task-picker,
 .task-add-form label {
   display: grid;

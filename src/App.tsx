@@ -81,7 +81,7 @@ function createDefaultTaskSelection(taskBankItems: TaskBankItem[]): TaskSelectio
 }
 
 export default function App() {
-  const { taskBankItems, addTaskBankItem } = useTaskBank();
+  const { taskBankItems, addTaskBankItem, isLoading: isTaskBankLoading, error: taskBankError } = useTaskBank();
   const { tasks, activeTask, activeTaskId, setActiveTaskId, resetTasks, updateAnswer, updateTaskAI } = useWritingTasks();
   const { settings: aiSettings, providerModels, updateSettings, clearSavedToken } = useAISettings();
   const { timeRemaining, hasStarted, isLocked, timerState, start, end } = useCountdownTimer();
@@ -271,6 +271,8 @@ export default function App() {
         onSelectTaskItem={handleSelectTaskItem}
         onRandomizeSelection={handleRandomizeTaskSelection}
         onAddTask={addTaskBankItem}
+        isTaskBankLoading={isTaskBankLoading}
+        taskBankError={taskBankError}
       />
     );
   }

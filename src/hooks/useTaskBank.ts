@@ -1,8 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { defaultTaskBankItems } from '../data/tasks';
 import type { TaskBankItem, TaskDocument, TaskSlotId } from '../types';
-
-const STORAGE_KEY = 'tfc-ecrite.custom-task-bank';
 
 type NewTaskBankItem = {
   taskId: TaskSlotId;
@@ -10,58 +8,87 @@ type NewTaskBankItem = {
   documents?: TaskDocument[];
 };
 
+type TasksListResponse = {
+  tasks?: TaskBankItem[];
+  error?: string;
+};
+
+type CreateTaskResponse = {
+  task?: TaskBankItem;
+  error?: string;
+};
+
 function isTaskSlotId(value: unknown): value is TaskSlotId {
   return value === 1 || value === 2 || value === 3;
 }
 
-function readCustomTasks() {
-  const storedValue = window.localStorage.getItem(STORAGE_KEY);
+function isTaskBankItem(item: unknown): item is TaskBankItem {
+  const task = item as TaskBankItem;
+  const documents = task?.documents;
 
-  if (!storedValue) {
-    return [];
-  }
-
-  try {
-    const parsedValue = JSON.parse(storedValue);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter((item): item is TaskBankItem => {
-      const documents = (item as TaskBankItem).documents;
-
-      return (
-        typeof item?.id === 'string' &&
-        isTaskSlotId(item.taskId) &&
-        typeof item.prompt === 'string' &&
-        (!documents ||
-          (Array.isArray(documents) &&
-            documents.every((document) => typeof document.label === 'string' && typeof document.text === 'string')))
-      );
-    });
-  } catch {
-    return [];
-  }
+  return (
+    typeof task?.id === 'string' &&
+    isTaskSlotId(task.taskId) &&
+    typeof task.prompt === 'string' &&
+    (!documents ||
+      (Array.isArray(documents) &&
+        documents.every((document) => typeof document.label === 'string' && typeof document.text === 'string')))
+  );
 }
 
-function saveCustomTasks(tasks: TaskBankItem[]) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
+async function readJsonResponse<Result>(response: Response, fallbackError: string) {
+  const body = (await response.json().catch(() => undefined)) as Result | undefined;
 
-function createTaskId() {
-  return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (!response.ok) {
+    throw new Error((body as { error?: string } | undefined)?.error || fallbackError);
+  }
+
+  return body;
 }
 
 export function useTaskBank() {
-  const [customTaskBankItems, setCustomTaskBankItems] = useState<TaskBankItem[]>(readCustomTasks);
+  const [customTaskBankItems, setCustomTaskBankItems] = useState<TaskBankItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>();
 
   const taskBankItems = useMemo(
     () => [...defaultTaskBankItems, ...customTaskBankItems],
     [customTaskBankItems],
   );
 
-  function addTaskBankItem(newItem: NewTaskBankItem) {
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadCustomTasks() {
+      setIsLoading(true);
+      setError(undefined);
+
+      try {
+        const body = await readJsonResponse<TasksListResponse>(await fetch('/api/tasks'), 'Could not load saved tasks.');
+        const tasks = body?.tasks?.filter(isTaskBankItem) ?? [];
+
+        if (isActive) {
+          setCustomTaskBankItems(tasks);
+        }
+      } catch (loadError) {
+        if (isActive) {
+          setError(loadError instanceof Error ? loadError.message : 'Could not load saved tasks.');
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadCustomTasks();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  async function addTaskBankItem(newItem: NewTaskBankItem) {
     const documents = newItem.documents
       ?.map((document) => ({
         label: document.label.trim(),
@@ -69,26 +96,35 @@ export function useTaskBank() {
       }))
       .filter((document) => document.label && document.text);
 
-    const taskBankItem: TaskBankItem = {
-      id: createTaskId(),
-      taskId: newItem.taskId,
-      prompt: newItem.prompt.trim(),
-      documents: documents?.length ? documents : undefined,
-      createdAt: new Date().toISOString(),
-    };
-
-    setCustomTaskBankItems((currentItems) => {
-      const nextItems = [...currentItems, taskBankItem];
-      saveCustomTasks(nextItems);
-      return nextItems;
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        taskId: newItem.taskId,
+        prompt: newItem.prompt.trim(),
+        documents: documents?.length ? documents : undefined,
+      }),
     });
 
-    return taskBankItem;
+    const body = await readJsonResponse<CreateTaskResponse>(response, 'Could not save this task.');
+
+    if (!body?.task || !isTaskBankItem(body.task)) {
+      throw new Error('The server returned invalid task data.');
+    }
+
+    setCustomTaskBankItems((currentItems) => [...currentItems, body.task as TaskBankItem]);
+    setError(undefined);
+
+    return body.task;
   }
 
   return {
     taskBankItems,
     customTaskBankItems,
+    isLoading,
+    error,
     addTaskBankItem,
   };
 }

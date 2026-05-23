@@ -10,7 +10,9 @@ type GeneralInstructionsProps = {
   onStart: () => void;
   onSelectTaskItem: (taskId: TaskSlotId, taskItemId: string) => void;
   onRandomizeSelection: () => void;
-  onAddTask: (task: { taskId: TaskSlotId; prompt: string; documents?: TaskDocument[] }) => TaskBankItem;
+  onAddTask: (task: { taskId: TaskSlotId; prompt: string; documents?: TaskDocument[] }) => Promise<TaskBankItem>;
+  isTaskBankLoading?: boolean;
+  taskBankError?: string;
 };
 
 export function GeneralInstructions({
@@ -20,6 +22,8 @@ export function GeneralInstructions({
   onSelectTaskItem,
   onRandomizeSelection,
   onAddTask,
+  isTaskBankLoading,
+  taskBankError,
 }: GeneralInstructionsProps) {
   return (
     <main className="instructions-screen">
@@ -60,6 +64,8 @@ export function GeneralInstructions({
           onSelectTaskItem={onSelectTaskItem}
           onRandomizeSelection={onRandomizeSelection}
           onAddTask={onAddTask}
+          isLoading={isTaskBankLoading}
+          error={taskBankError}
         />
 
         <button className="primary-action instructions-start" type="button" onClick={onStart}>
