@@ -60,10 +60,13 @@ export function TaskAdminPanel({
       return;
     }
 
-    const documents = [
-      { label: 'Document 1', text: documentOne },
-      { label: 'Document 2', text: documentTwo },
-    ].filter((document) => document.text.trim());
+    const documents =
+      taskId === 3
+        ? [
+            { label: 'Document 1', text: documentOne },
+            { label: 'Document 2', text: documentTwo },
+          ].filter((document) => document.text.trim())
+        : [];
 
     const createdTask = onAddTask({
       taskId,
@@ -146,7 +149,18 @@ export function TaskAdminPanel({
 
             <label>
               Type
-              <select value={taskId} onChange={(event) => setTaskId(toTaskSlotId(event.target.value))}>
+              <select
+                value={taskId}
+                onChange={(event) => {
+                  const nextTaskId = toTaskSlotId(event.target.value);
+                  setTaskId(nextTaskId);
+
+                  if (nextTaskId !== 3) {
+                    setDocumentOne('');
+                    setDocumentTwo('');
+                  }
+                }}
+              >
                 {taskIds.map((currentTaskId) => (
                   <option value={currentTaskId} key={currentTaskId}>
                     {getTaskSlotLabel(currentTaskId)}
@@ -160,15 +174,19 @@ export function TaskAdminPanel({
               <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={6} />
             </label>
 
-            <label>
-              Document 1
-              <textarea value={documentOne} onChange={(event) => setDocumentOne(event.target.value)} rows={4} />
-            </label>
+            {taskId === 3 ? (
+              <>
+                <label>
+                  Document 1
+                  <textarea value={documentOne} onChange={(event) => setDocumentOne(event.target.value)} rows={4} />
+                </label>
 
-            <label>
-              Document 2
-              <textarea value={documentTwo} onChange={(event) => setDocumentTwo(event.target.value)} rows={4} />
-            </label>
+                <label>
+                  Document 2
+                  <textarea value={documentTwo} onChange={(event) => setDocumentTwo(event.target.value)} rows={4} />
+                </label>
+              </>
+            ) : null}
 
             {error ? <p className="form-error">{error}</p> : null}
 
