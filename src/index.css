@@ -380,11 +380,18 @@ button:disabled {
 }
 
 .task-admin-header,
-.task-admin-section-title {
+.task-admin-section-title,
+.task-admin-actions,
+.task-picker-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.task-admin-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .task-admin-header h2,
@@ -416,10 +423,42 @@ button:disabled {
 .task-picker,
 .task-add-form label {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   color: #374151;
   font-size: 13px;
   font-weight: 650;
+}
+
+.task-picker {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.task-picker-heading span {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 760;
+}
+
+.task-preview-button {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.task-preview-button:hover,
+.task-preview-button:focus-visible {
+  color: #1d4ed8;
+  text-decoration: underline;
 }
 
 .task-picker select,
@@ -455,11 +494,12 @@ button:disabled {
   box-shadow: 0 0 0 1px #111827;
 }
 
-.task-picker small {
-  color: #6b7280;
+.task-picker-summary {
+  margin: 0;
+  color: #4b5563;
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: 1.45;
 }
 
 .task-admin-grid {
@@ -639,8 +679,10 @@ button:disabled {
   padding: 14px;
 }
 
-.source-document h2 {
+.source-document h2,
+.source-document h3 {
   margin: 0 0 7px;
+  color: #6b7280;
   font-size: 13px;
   font-weight: 720;
   text-transform: uppercase;
@@ -649,6 +691,57 @@ button:disabled {
 .source-document p {
   font-size: 14px;
   line-height: 1.55;
+  white-space: pre-line;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgb(17 24 39 / 0.48);
+  padding: 24px;
+}
+
+.task-preview-modal {
+  display: grid;
+  width: min(900px, 100%);
+  max-height: min(82vh, 760px);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgb(15 23 42 / 0.28);
+}
+
+.task-preview-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 18px 20px;
+}
+
+.task-preview-header h2 {
+  margin: 2px 0 0;
+  color: #111827;
+  font-size: 22px;
+}
+
+.task-preview-body {
+  display: grid;
+  gap: 18px;
+  overflow: auto;
+  padding: 20px;
+}
+
+.task-preview-prompt {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  line-height: 1.65;
   white-space: pre-line;
 }
 
