@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createInitialTasks } from '../data/tasks';
-import type { WritingTask } from '../types';
+import type { TaskBankItem, WritingTask } from '../types';
 
 export function useWritingTasks() {
   const [tasks, setTasks] = useState<WritingTask[]>(createInitialTasks);
@@ -23,11 +23,17 @@ export function useWritingTasks() {
     );
   }
 
+  function resetTasks(taskBankItems: TaskBankItem[]) {
+    setTasks(createInitialTasks(taskBankItems));
+    setActiveTaskId(1);
+  }
+
   return {
     tasks,
     activeTask,
     activeTaskId,
     setActiveTaskId,
+    resetTasks,
     updateAnswer,
     updateTaskAI,
   };

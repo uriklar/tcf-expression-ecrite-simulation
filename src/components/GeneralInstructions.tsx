@@ -1,10 +1,26 @@
 import { Play } from 'lucide-react';
+import type { TaskBankItem, TaskDocument, TaskSlotId } from '../types';
+import { TaskAdminPanel } from './TaskAdminPanel';
+
+type TaskSelection = Record<TaskSlotId, string>;
 
 type GeneralInstructionsProps = {
+  taskBankItems: TaskBankItem[];
+  selectedTaskItemIds: TaskSelection;
   onStart: () => void;
+  onSelectTaskItem: (taskId: TaskSlotId, taskItemId: string) => void;
+  onRandomizeSelection: () => void;
+  onAddTask: (task: { taskId: TaskSlotId; prompt: string; documents?: TaskDocument[] }) => TaskBankItem;
 };
 
-export function GeneralInstructions({ onStart }: GeneralInstructionsProps) {
+export function GeneralInstructions({
+  taskBankItems,
+  selectedTaskItemIds,
+  onStart,
+  onSelectTaskItem,
+  onRandomizeSelection,
+  onAddTask,
+}: GeneralInstructionsProps) {
   return (
     <main className="instructions-screen">
       <section className="instructions-content" aria-labelledby="instructions-title">
@@ -37,6 +53,14 @@ export function GeneralInstructions({ onStart }: GeneralInstructionsProps) {
             </li>
           </ul>
         </div>
+
+        <TaskAdminPanel
+          taskBankItems={taskBankItems}
+          selectedTaskItemIds={selectedTaskItemIds}
+          onSelectTaskItem={onSelectTaskItem}
+          onRandomizeSelection={onRandomizeSelection}
+          onAddTask={onAddTask}
+        />
 
         <button className="primary-action instructions-start" type="button" onClick={onStart}>
           <Play size={18} />

@@ -6,6 +6,21 @@ export type AIProvider = 'openai' | 'anthropic' | 'google';
 
 export type FeedbackLanguage = 'english' | 'french' | 'hebrew';
 
+export type TaskSlotId = 1 | 2 | 3;
+
+export type TaskDocument = {
+  label: string;
+  text: string;
+};
+
+export type TaskBankItem = {
+  id: string;
+  taskId: TaskSlotId;
+  prompt: string;
+  documents?: TaskDocument[];
+  createdAt?: string;
+};
+
 export type AISettings = {
   provider: AIProvider;
   apiKey: string;
@@ -38,7 +53,8 @@ export type SuggestionResult = {
 };
 
 export type WritingTask = {
-  id: 1 | 2 | 3;
+  id: TaskSlotId;
+  bankItemId: string;
   title: string;
   type: string;
   prompt: string;
@@ -46,10 +62,7 @@ export type WritingTask = {
   maxWords: number;
   suggestedMinutes: number;
   answer: string;
-  documents?: {
-    label: string;
-    text: string;
-  }[];
+  documents?: TaskDocument[];
   gradingResult?: GradingResult;
   suggestionResult?: SuggestionResult;
   aiStatus?: 'idle' | 'grading' | 'suggesting' | 'error';

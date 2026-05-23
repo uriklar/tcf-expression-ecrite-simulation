@@ -10,9 +10,13 @@ import { WritingEditor } from './components/WritingEditor';
 import { useActiveEditor } from './hooks/useActiveEditor';
 import { useAISettings } from './hooks/useAISettings';
 import { useCountdownTimer } from './hooks/useCountdownTimer';
+import { useTaskBank } from './hooks/useTaskBank';
 import { useWritingTasks } from './hooks/useWritingTasks';
-import type { GradingResult, SuggestionMode, SuggestionResult, WritingTask } from './types';
+import { taskIds } from './data/tasks';
+import type { GradingResult, SuggestionMode, SuggestionResult, TaskBankItem, TaskSlotId, WritingTask } from './types';
 import { insertAtCursor } from './utils/insertAtCursor';
+
+type TaskSelection = Record<TaskSlotId, string>;
 
 type AIApiResponse<Result> = {
   result?: Result;
@@ -66,12 +70,26 @@ function readablePlatformError(responseText: string) {
   return undefined;
 }
 
+function createDefaultTaskSelection(taskBankItems: TaskBankItem[]): TaskSelection {
+  return taskIds.reduce<TaskSelection>(
+    (selection, taskId) => ({
+      ...selection,
+      [taskId]: taskBankItems.find((item) => item.taskId === taskId)?.id ?? '',
+    }),
+    { 1: '', 2: '', 3: '' },
+  );
+}
+
 export default function App() {
-  const { tasks, activeTask, activeTaskId, setActiveTaskId, updateAnswer, updateTaskAI } = useWritingTasks();
+  const { taskBankItems, addTaskBankItem } = useTaskBank();
+  const { tasks, activeTask, activeTaskId, setActiveTaskId, resetTasks, updateAnswer, updateTaskAI } = useWritingTasks();
   const { settings: aiSettings, providerModels, updateSettings, clearSavedToken } = useAISettings();
   const { timeRemaining, hasStarted, isLocked, timerState, start, end } = useCountdownTimer();
   const editorRef = useActiveEditor();
   const [isUppercase, setIsUppercase] = useState(false);
+  const [selectedTaskItemIds, setSelectedTaskItemIds] = useState<TaskSelection>(() =>
+    createDefaultTaskSelection(taskBankItems),
+  );
   const isEditorDisabled = !hasStarted || isLocked;
 
   useEffect(() => {
@@ -92,6 +110,42 @@ export default function App() {
       editor.focus();
       editor.setSelectionRange(nextCursor, nextCursor);
     });
+  }
+
+  function handleSelectTaskItem(taskId: TaskSlotId, taskItemId: string) {
+    setSelectedTaskItemIds((currentSelection) => ({
+      ...currentSelection,
+      [taskId]: taskItemId,
+    }));
+  }
+
+  function handleRandomizeTaskSelection() {
+    setSelectedTaskItemIds((currentSelection) =>
+      taskIds.reduce<TaskSelection>((selection, taskId) => {
+        const options = taskBankItems.filter((item) => item.taskId === taskId);
+        const randomItem = options[Math.floor(Math.random() * options.length)] ?? options[0];
+
+        return {
+          ...selection,
+          [taskId]: randomItem?.id ?? '',
+        };
+      }, currentSelection),
+    );
+  }
+
+  function getSelectedTaskBankItems() {
+    return taskIds.map((taskId) => {
+      const selectedTask = taskBankItems.find(
+        (item) => item.taskId === taskId && item.id === selectedTaskItemIds[taskId],
+      );
+
+      return selectedTask ?? taskBankItems.find((item) => item.taskId === taskId);
+    }).filter((item): item is TaskBankItem => Boolean(item));
+  }
+
+  function handleStartSimulation() {
+    resetTasks(getSelectedTaskBankItems());
+    start();
   }
 
   function getAIContextTask(task: WritingTask) {
@@ -209,7 +263,16 @@ export default function App() {
   }
 
   if (!hasStarted) {
-    return <GeneralInstructions onStart={start} />;
+    return (
+      <GeneralInstructions
+        taskBankItems={taskBankItems}
+        selectedTaskItemIds={selectedTaskItemIds}
+        onStart={handleStartSimulation}
+        onSelectTaskItem={handleSelectTaskItem}
+        onRandomizeSelection={handleRandomizeTaskSelection}
+        onAddTask={addTaskBankItem}
+      />
+    );
   }
 
   return (
