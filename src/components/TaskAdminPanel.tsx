@@ -1,8 +1,9 @@
-import { ListChecks, Plus, Shuffle } from 'lucide-react';
+import { Eye, ListChecks, Plus, Settings2, Shuffle } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { getTaskSlotLabel, taskIds } from '../data/tasks';
 import type { TaskBankItem, TaskDocument, TaskSlotId } from '../types';
+import { TaskPreviewModal } from './TaskPreviewModal';
 
 type TaskSelection = Record<TaskSlotId, string>;
 
@@ -36,6 +37,8 @@ export function TaskAdminPanel({
   const [documentOne, setDocumentOne] = useState('');
   const [documentTwo, setDocumentTwo] = useState('');
   const [error, setError] = useState('');
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [previewTask, setPreviewTask] = useState<TaskBankItem | undefined>();
 
   const taskItemsBySlot = useMemo(
     () =>
@@ -80,12 +83,24 @@ export function TaskAdminPanel({
       <div className="task-admin-header">
         <div>
           <p className="eyebrow">Simulation</p>
-          <h2 id="task-admin-title">Choix des tâches</h2>
+          <h2 id="task-admin-title">Choisir les tâches</h2>
         </div>
-        <button className="secondary-action" type="button" onClick={onRandomizeSelection}>
-          <Shuffle size={15} />
-          Aléatoire
-        </button>
+        <div className="task-admin-actions">
+          <button className="secondary-action" type="button" onClick={onRandomizeSelection}>
+            <Shuffle size={15} />
+            Aléatoire
+          </button>
+          <button
+            className="secondary-action"
+            type="button"
+            onClick={() => setIsAdminOpen((isOpen) => !isOpen)}
+            aria-expanded={isAdminOpen}
+            aria-controls="task-admin-tools"
+          >
+            <Settings2 size={15} />
+            {isAdminOpen ? 'Masquer admin' : 'Admin'}
+          </button>
+        </div>
       </div>
 
       <div className="task-picker-grid">
@@ -94,9 +109,18 @@ export function TaskAdminPanel({
           const selectedTask = taskItems.find((item) => item.id === selectedTaskItemIds[currentTaskId]) ?? taskItems[0];
 
           return (
-            <label className="task-picker" key={currentTaskId}>
-              <span>{getTaskSlotLabel(currentTaskId)}</span>
+            <div className="task-picker" key={currentTaskId}>
+              <div className="task-picker-heading">
+                <span>{getTaskSlotLabel(currentTaskId)}</span>
+                {selectedTask ? (
+                  <button className="task-preview-button" type="button" onClick={() => setPreviewTask(selectedTask)}>
+                    <Eye size={14} />
+                    Lire
+                  </button>
+                ) : null}
+              </div>
               <select
+                aria-label={`Choisir ${getTaskSlotLabel(currentTaskId)}`}
                 value={selectedTask?.id ?? ''}
                 onChange={(event) => onSelectTaskItem(currentTaskId, event.target.value)}
               >
@@ -106,77 +130,85 @@ export function TaskAdminPanel({
                   </option>
                 ))}
               </select>
-              {selectedTask ? <small>{summarizePrompt(selectedTask.prompt)}</small> : null}
-            </label>
+              {selectedTask ? <p className="task-picker-summary">{summarizePrompt(selectedTask.prompt)}</p> : null}
+            </div>
           );
         })}
       </div>
 
-      <div className="task-admin-grid">
-        <form className="task-add-form" onSubmit={handleSubmit}>
-          <div className="task-admin-section-title">
-            <Plus size={16} />
-            <h3>Ajouter une tâche</h3>
-          </div>
+      {isAdminOpen ? (
+        <div className="task-admin-grid" id="task-admin-tools">
+          <form className="task-add-form" onSubmit={handleSubmit}>
+            <div className="task-admin-section-title">
+              <Plus size={16} />
+              <h3>Ajouter une tâche</h3>
+            </div>
 
-          <label>
-            Type
-            <select value={taskId} onChange={(event) => setTaskId(toTaskSlotId(event.target.value))}>
-              {taskIds.map((currentTaskId) => (
-                <option value={currentTaskId} key={currentTaskId}>
-                  {getTaskSlotLabel(currentTaskId)}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Consigne
-            <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={6} />
-          </label>
-
-          <label>
-            Document 1
-            <textarea value={documentOne} onChange={(event) => setDocumentOne(event.target.value)} rows={4} />
-          </label>
-
-          <label>
-            Document 2
-            <textarea value={documentTwo} onChange={(event) => setDocumentTwo(event.target.value)} rows={4} />
-          </label>
-
-          {error ? <p className="form-error">{error}</p> : null}
-
-          <button className="primary-action" type="submit">
-            <Plus size={16} />
-            Ajouter
-          </button>
-        </form>
-
-        <div className="task-bank-list">
-          <div className="task-admin-section-title">
-            <ListChecks size={16} />
-            <h3>Banque des tâches</h3>
-          </div>
-
-          {taskIds.map((currentTaskId) => (
-            <section className="task-bank-group" key={currentTaskId}>
-              <h4>{getTaskSlotLabel(currentTaskId)}</h4>
-              <div className="task-bank-items">
-                {taskItemsBySlot[currentTaskId].map((item, index) => (
-                  <article className="task-bank-item" key={item.id}>
-                    <div>
-                      <strong>{index + 1}</strong>
-                      {item.id.startsWith('custom-') ? <span>Ajoutée</span> : null}
-                    </div>
-                    <p>{summarizePrompt(item.prompt)}</p>
-                  </article>
+            <label>
+              Type
+              <select value={taskId} onChange={(event) => setTaskId(toTaskSlotId(event.target.value))}>
+                {taskIds.map((currentTaskId) => (
+                  <option value={currentTaskId} key={currentTaskId}>
+                    {getTaskSlotLabel(currentTaskId)}
+                  </option>
                 ))}
-              </div>
-            </section>
-          ))}
+              </select>
+            </label>
+
+            <label>
+              Consigne
+              <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={6} />
+            </label>
+
+            <label>
+              Document 1
+              <textarea value={documentOne} onChange={(event) => setDocumentOne(event.target.value)} rows={4} />
+            </label>
+
+            <label>
+              Document 2
+              <textarea value={documentTwo} onChange={(event) => setDocumentTwo(event.target.value)} rows={4} />
+            </label>
+
+            {error ? <p className="form-error">{error}</p> : null}
+
+            <button className="primary-action" type="submit">
+              <Plus size={16} />
+              Ajouter
+            </button>
+          </form>
+
+          <div className="task-bank-list">
+            <div className="task-admin-section-title">
+              <ListChecks size={16} />
+              <h3>Banque des tâches</h3>
+            </div>
+
+            {taskIds.map((currentTaskId) => (
+              <section className="task-bank-group" key={currentTaskId}>
+                <h4>{getTaskSlotLabel(currentTaskId)}</h4>
+                <div className="task-bank-items">
+                  {taskItemsBySlot[currentTaskId].map((item, index) => (
+                    <article className="task-bank-item" key={item.id}>
+                      <div>
+                        <strong>{index + 1}</strong>
+                        {item.id.startsWith('custom-') ? <span>Ajoutée</span> : null}
+                        <button className="task-preview-button" type="button" onClick={() => setPreviewTask(item)}>
+                          <Eye size={14} />
+                          Lire
+                        </button>
+                      </div>
+                      <p>{summarizePrompt(item.prompt)}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {previewTask ? <TaskPreviewModal task={previewTask} onClose={() => setPreviewTask(undefined)} /> : null}
     </section>
   );
 }
