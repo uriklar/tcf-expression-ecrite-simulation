@@ -72,6 +72,10 @@ Vous écrivez une réponse à Laura dans laquelle vous décrivez une salle de sp
       prompt:
         "Écrivez un message à un(e) ami(e) pour raconter votre week-end à la campagne en détaillant les événements qui se sont déroulés.",
     }),
+    createDefaultTask('default-1-6', 1, {
+      prompt:
+        "Votre ami(e) veut visiter la région où vous vivez. Écrivez-lui un message pour lui proposer quelques lieux intéressants à découvrir.",
+    }),
   ],
   2: [
     createDefaultTask('default-2-1', 2, {
@@ -100,6 +104,10 @@ Exprimez votre opinion sur le site voyage.internaute.fr avec des exemples tirés
     createDefaultTask('default-2-5', 2, {
       prompt:
         "Rédigez un message à la direction pour informer qu'un lieu a été trouvé pour la fête de fin d'année. Vous précisez le lieu, les tarifs, les services et les autres informations pertinentes.",
+    }),
+    createDefaultTask('default-2-6', 2, {
+      prompt:
+        "Vous avez assisté récemment à un cours de sport dans une salle de votre ville. Écrivez un article sur votre blog afin de partager votre expérience et donner votre opinion sur cette salle.",
     }),
   ],
   3: [
