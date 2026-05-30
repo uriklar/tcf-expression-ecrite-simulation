@@ -1174,3 +1174,119 @@ textarea:disabled {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
+
+.cheat-sheet-modal {
+  width: min(980px, 100%);
+}
+
+.cheat-sheet-body {
+  gap: 16px;
+}
+
+.cheat-sheet-intro {
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+  padding: 14px 16px;
+  color: #1e3a8a;
+}
+
+.cheat-sheet-intro p,
+.cheat-sheet-section p,
+.cheat-sheet-empty p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.cheat-sheet-section {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.cheat-sheet-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.cheat-sheet-section h3,
+.cheat-sheet-empty h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.cheat-sheet-section h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 15px;
+}
+
+.cheat-sheet-section pre {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  margin: 0;
+  padding: 12px;
+  color: #111827;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.cheat-sheet-phrase-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cheat-sheet-topic {
+  display: grid;
+  gap: 7px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.cheat-sheet-table-wrapper {
+  overflow-x: auto;
+}
+
+.cheat-sheet-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  color: #374151;
+  font-size: 14px;
+}
+
+.cheat-sheet-table th,
+.cheat-sheet-table td {
+  border: 1px solid #e5e7eb;
+  padding: 9px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.cheat-sheet-table th {
+  background: #f3f4f6;
+  color: #111827;
+  font-weight: 750;
+}
+
+.cheat-sheet-empty {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 18px;
+  color: #4b5563;
+}

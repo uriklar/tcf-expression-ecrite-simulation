@@ -1,7 +1,8 @@
 import { RefObject, useState } from 'react';
-import { Bot, WandSparkles } from 'lucide-react';
+import { Bot, BookOpenText, WandSparkles } from 'lucide-react';
 import type { SuggestionMode, WritingTask } from '../types';
 import { AIResultsPanel } from './AIResultsPanel';
+import { CheatSheetModal } from './CheatSheetModal';
 import { countWords } from '../utils/wordCount';
 
 type WritingEditorProps = {
@@ -26,13 +27,13 @@ export function WritingEditor({
   onReplaceSuggestion,
 }: WritingEditorProps) {
   const [isSuggestionChooserOpen, setIsSuggestionChooserOpen] = useState(false);
+  const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [suggestionMode, setSuggestionMode] = useState<SuggestionMode>('brand-new');
   const wordCount = countWords(task.answer);
   const isAboveMax = wordCount > task.maxWords;
   const isBelowMin = wordCount > 0 && wordCount < task.minWords;
   const isGrading = task.aiStatus === 'grading';
   const isSuggesting = task.aiStatus === 'suggesting';
-  const hasAnswer = task.answer.trim().length > 0;
 
   return (
     <section className="writing-editor" aria-labelledby="editor-heading">
@@ -80,6 +81,10 @@ export function WritingEditor({
             <Bot size={15} />
             {isGrading ? 'Checking...' : 'Check with AI'}
           </button>
+          <button className="secondary-action" type="button" onClick={() => setIsCheatSheetOpen(true)}>
+            <BookOpenText size={15} />
+            Cheat sheet
+          </button>
           <button
             className="secondary-action"
             type="button"
@@ -91,6 +96,8 @@ export function WritingEditor({
           </button>
         </div>
       </div>
+
+      {isCheatSheetOpen ? <CheatSheetModal taskId={task.id} onClose={() => setIsCheatSheetOpen(false)} /> : null}
 
       {isSuggestionChooserOpen ? (
         <form
