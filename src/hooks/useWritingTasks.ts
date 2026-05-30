@@ -1,6 +1,19 @@
 import { useMemo, useState } from 'react';
 import { createInitialTasks } from '../data/tasks';
-import type { TaskBankItem, WritingTask } from '../types';
+import type { TaskBankItem, TaskSlotId, WritingTask } from '../types';
+
+type SavedAnswers = Partial<Record<TaskSlotId, string>>;
+
+function applySavedAnswers(tasks: WritingTask[], savedAnswers?: SavedAnswers) {
+  if (!savedAnswers) {
+    return tasks;
+  }
+
+  return tasks.map((task) => ({
+    ...task,
+    answer: savedAnswers[task.id] ?? task.answer,
+  }));
+}
 
 export function useWritingTasks() {
   const [tasks, setTasks] = useState<WritingTask[]>(createInitialTasks);
@@ -23,8 +36,8 @@ export function useWritingTasks() {
     );
   }
 
-  function resetTasks(taskBankItems: TaskBankItem[]) {
-    setTasks(createInitialTasks(taskBankItems));
+  function resetTasks(taskBankItems: TaskBankItem[], savedAnswers?: SavedAnswers) {
+    setTasks(applySavedAnswers(createInitialTasks(taskBankItems), savedAnswers));
     setActiveTaskId(1);
   }
 
