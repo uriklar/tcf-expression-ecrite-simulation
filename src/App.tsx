@@ -18,6 +18,14 @@ import { insertAtCursor } from './utils/insertAtCursor';
 
 type TaskSelection = Record<TaskSlotId, string>;
 
+type SavedDraft = {
+  answers: Partial<Record<TaskSlotId, string>>;
+  updatedAt: number;
+};
+
+const DRAFT_STORAGE_KEY_PREFIX = 'tfc-ecrite.simulation-draft';
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+
 type AIApiResponse<Result> = {
   result?: Result;
   error?: string;
@@ -80,6 +88,128 @@ function createDefaultTaskSelection(taskBankItems: TaskBankItem[]): TaskSelectio
   );
 }
 
+function getTaskSelectionFromUrl(taskBankItems: TaskBankItem[]): TaskSelection | undefined {
+  const searchParams = new URLSearchParams(window.location.search);
+  const selectedIds = taskIds.map((taskId) => searchParams.get(`q${taskId}`));
+
+  if (selectedIds.every((selectedId) => !selectedId)) {
+    return undefined;
+  }
+
+  const defaultSelection = createDefaultTaskSelection(taskBankItems);
+
+  return taskIds.reduce<TaskSelection>((selection, taskId, index) => {
+    const selectedId = selectedIds[index];
+    const hasMatchingTask = taskBankItems.some((item) => item.taskId === taskId && item.id === selectedId);
+
+    return {
+      ...selection,
+      [taskId]: hasMatchingTask && selectedId ? selectedId : defaultSelection[taskId],
+    };
+  }, defaultSelection);
+}
+
+function createInitialTaskSelection(taskBankItems: TaskBankItem[]) {
+  return getTaskSelectionFromUrl(taskBankItems) ?? createDefaultTaskSelection(taskBankItems);
+}
+
+function getDraftStorageKey(selection: TaskSelection) {
+  const selectionKey = taskIds.map((taskId) => selection[taskId]).join('|');
+  return `${DRAFT_STORAGE_KEY_PREFIX}.${encodeURIComponent(selectionKey)}`;
+}
+
+function readSavedDraft(selection: TaskSelection): SavedDraft | undefined {
+  try {
+    const storedValue = window.localStorage.getItem(getDraftStorageKey(selection));
+
+    if (!storedValue) {
+      return undefined;
+    }
+
+    const parsedValue = JSON.parse(storedValue) as SavedDraft;
+
+    if (!parsedValue.updatedAt || Date.now() - parsedValue.updatedAt > DRAFT_TTL_MS) {
+      window.localStorage.removeItem(getDraftStorageKey(selection));
+      return undefined;
+    }
+
+    return parsedValue;
+  } catch {
+    return undefined;
+  }
+}
+
+function saveDraft(selection: TaskSelection, tasks: WritingTask[]) {
+  try {
+    const answers = tasks.reduce<Partial<Record<TaskSlotId, string>>>((savedAnswers, task) => {
+      savedAnswers[task.id] = task.answer;
+      return savedAnswers;
+    }, {});
+
+    window.localStorage.setItem(
+      getDraftStorageKey(selection),
+      JSON.stringify({
+        answers,
+        updatedAt: Date.now(),
+      } satisfies SavedDraft),
+    );
+  } catch {
+    // Ignore storage quota/private-mode failures so the writing UI remains usable.
+  }
+}
+
+function clearSavedDraft(selection: TaskSelection) {
+  try {
+    window.localStorage.removeItem(getDraftStorageKey(selection));
+  } catch {
+    // Ignore storage failures so ending a simulation never crashes the app.
+  }
+}
+
+function clearExpiredDrafts() {
+  const now = Date.now();
+
+  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.localStorage.key(index);
+
+    if (!key?.startsWith(`${DRAFT_STORAGE_KEY_PREFIX}.`)) {
+      continue;
+    }
+
+    try {
+      const storedValue = window.localStorage.getItem(key);
+      const parsedValue = storedValue ? (JSON.parse(storedValue) as SavedDraft) : undefined;
+
+      if (!parsedValue?.updatedAt || now - parsedValue.updatedAt > DRAFT_TTL_MS) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      window.localStorage.removeItem(key);
+    }
+  }
+}
+
+function updateUrlTaskSelection(selection: TaskSelection) {
+  const url = new URL(window.location.href);
+
+  taskIds.forEach((taskId) => {
+    const selectedTaskItemId = selection[taskId];
+
+    if (selectedTaskItemId) {
+      url.searchParams.set(`q${taskId}`, selectedTaskItemId);
+    } else {
+      url.searchParams.delete(`q${taskId}`);
+    }
+  });
+
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+  if (nextUrl !== currentUrl) {
+    window.history.replaceState(null, '', nextUrl);
+  }
+}
+
 export default function App() {
   const { taskBankItems, addTaskBankItem } = useTaskBank();
   const { tasks, activeTask, activeTaskId, setActiveTaskId, resetTasks, updateAnswer, updateTaskAI } = useWritingTasks();
@@ -88,9 +218,30 @@ export default function App() {
   const editorRef = useActiveEditor();
   const [isUppercase, setIsUppercase] = useState(false);
   const [selectedTaskItemIds, setSelectedTaskItemIds] = useState<TaskSelection>(() =>
-    createDefaultTaskSelection(taskBankItems),
+    createInitialTaskSelection(taskBankItems),
   );
   const isEditorDisabled = !hasStarted || isLocked;
+
+  useEffect(() => {
+    clearExpiredDrafts();
+  }, []);
+
+  useEffect(() => {
+    updateUrlTaskSelection(selectedTaskItemIds);
+  }, [selectedTaskItemIds]);
+
+  useEffect(() => {
+    if (!hasStarted) {
+      return;
+    }
+
+    if (isLocked) {
+      clearSavedDraft(selectedTaskItemIds);
+      return;
+    }
+
+    saveDraft(selectedTaskItemIds, tasks);
+  }, [hasStarted, isLocked, selectedTaskItemIds, tasks]);
 
   useEffect(() => {
     editorRef.current?.focus();
@@ -144,8 +295,13 @@ export default function App() {
   }
 
   function handleStartSimulation() {
-    resetTasks(getSelectedTaskBankItems());
+    resetTasks(getSelectedTaskBankItems(), readSavedDraft(selectedTaskItemIds)?.answers);
     start();
+  }
+
+  function handleEndSimulation() {
+    clearSavedDraft(selectedTaskItemIds);
+    end();
   }
 
   function getAIContextTask(task: WritingTask) {
@@ -287,7 +443,7 @@ export default function App() {
           isLocked={isLocked}
           onSelectTask={setActiveTaskId}
           onStart={start}
-          onEnd={end}
+          onEnd={handleEndSimulation}
         >
           <AISettingsPanel
             settings={aiSettings}
