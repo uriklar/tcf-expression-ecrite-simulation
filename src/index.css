@@ -1695,3 +1695,13 @@ textarea:disabled {
     flex-direction: column;
   }
 }
+
+.trainer-checklist li small {
+  display: block;
+  margin-top: 5px;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  opacity: 0.82;
+}

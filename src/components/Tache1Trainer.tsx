@@ -42,7 +42,60 @@ function normalizeText(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’‘`´]/g, "'")
     .toLowerCase();
+}
+
+function normalizeForMatching(value: string) {
+  return normalizeText(value)
+    .replace(/\([a-z]+\)/g, '')
+    .replace(/\[[^\]]+\]/g, ' ')
+    .replace(/[^a-z0-9' ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function hasNearTokenMatch(answer: string, phrase: string) {
+  const answerTokens = normalizeForMatching(answer).split(' ').filter(Boolean);
+  const phraseTokens = normalizeForMatching(phrase).split(' ').filter(Boolean);
+
+  if (phraseTokens.length < 5 || answerTokens.length < phraseTokens.length) {
+    return false;
+  }
+
+  const allowedMismatches = phraseTokens.length >= 7 ? 2 : 1;
+
+  for (let start = 0; start <= answerTokens.length - phraseTokens.length; start += 1) {
+    const mismatches = phraseTokens.reduce((count, token, index) => {
+      return count + (answerTokens[start + index] === token ? 0 : 1);
+    }, 0);
+
+    if (mismatches <= allowedMismatches) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function matchesTemplatePhrase(answer: string, phrase: TemplatePhrase) {
+  const normalizedAnswer = normalizeForMatching(answer);
+  const normalizedPhrase = normalizeForMatching(phrase.french);
+
+  if (normalizedPhrase && normalizedAnswer.includes(normalizedPhrase)) {
+    return true;
+  }
+
+  if (!phrase.french.includes('[') && hasNearTokenMatch(answer, phrase.french)) {
+    return true;
+  }
+
+  const concreteParts = phrase.french
+    .split(/\[[^\]]+\]|\([a-zA-Z]+\)/)
+    .map(normalizeForMatching)
+    .filter((part) => part.length >= 6);
+
+  return concreteParts.length > 0 && concreteParts.every((part) => normalizedAnswer.includes(part));
 }
 
 function pickRandomTask(currentTaskId?: string) {
@@ -100,7 +153,8 @@ export function Tache1Trainer() {
   const includedDetails = task.requiredDetails.filter((detail) =>
     detail.keywords.some((keyword) => normalizedAnswer.includes(normalizeText(keyword))),
   );
-  const usedPhrases = relevantPhrases.filter((phrase) => normalizedAnswer.includes(normalizeText(phrase.french)));
+  const missingDetails = task.requiredDetails.filter((detail) => !includedDetails.includes(detail));
+  const usedPhrases = relevantPhrases.filter((phrase) => matchesTemplatePhrase(fullAnswer, phrase));
   const completedSections = Object.values(sections).filter((value) => value.trim().length > 0).length;
   const isWordCountOk = wordCount >= 60 && wordCount <= 120;
 
@@ -319,21 +373,37 @@ export function Tache1Trainer() {
           <p className="eyebrow">Étape 3 · Checklist</p>
           <h2>Exam-ready check</h2>
           <ul className="trainer-checklist">
-            <li className={completedSections === 5 ? 'done' : ''}>5/5 message sections completed</li>
-            <li className={isWordCountOk ? 'done' : ''}>60–120 words</li>
-            <li className={includedDetails.length === task.requiredDetails.length ? 'done' : ''}>
-              Required details included: {includedDetails.length}/{task.requiredDetails.length}
+            <li className={completedSections === 5 ? 'done' : ''}>
+              <strong>Sections:</strong> {completedSections}/5 completed
+              {completedSections < 5 ? <small>Fill every builder section before the final answer.</small> : null}
             </li>
-            <li className={usedPhrases.length >= 3 ? 'done' : ''}>Template phrases used: {usedPhrases.length}/3</li>
+            <li className={isWordCountOk ? 'done' : ''}>
+              <strong>Word count:</strong> {wordCount}/60–120 words
+              {!isWordCountOk ? <small>{wordCount < 60 ? 'Add more detail.' : 'Shorten the answer.'}</small> : null}
+            </li>
+            <li className={missingDetails.length === 0 ? 'done' : ''}>
+              <strong>Required details:</strong> {includedDetails.length}/{task.requiredDetails.length} included
+              {missingDetails.length ? (
+                <small>Missing: {missingDetails.map((detail) => detail.label).join(', ')}</small>
+              ) : null}
+            </li>
+            <li className={usedPhrases.length >= 3 ? 'done' : ''}>
+              <strong>Template phrases:</strong> {usedPhrases.length}/3 recognized
+              {usedPhrases.length ? (
+                <small>Recognized: {usedPhrases.map((phrase) => phrase.french).join(' · ')}</small>
+              ) : (
+                <small>Use or adapt phrases from the section model banks.</small>
+              )}
+            </li>
           </ul>
 
           {showReview ? (
             <div className="trainer-review-box">
               <h3>Quick feedback</h3>
               <p>
-                {completedSections === 5 && isWordCountOk && includedDetails.length === task.requiredDetails.length
+                {completedSections === 5 && isWordCountOk && missingDetails.length === 0
                   ? 'Good structure. Now try the same prompt again with fewer hints, or switch to a new task.'
-                  : 'Not exam-ready yet. Fix the unchecked items first, then review again.'}
+                  : 'Not exam-ready yet. Fix the specific checklist notes above, then review again.'}
               </p>
               {usedPhrases.length ? (
                 <p>
