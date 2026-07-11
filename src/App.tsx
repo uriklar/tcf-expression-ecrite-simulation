@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { AISettingsPanel } from './components/AISettingsPanel';
 import { GeneralInstructions } from './components/GeneralInstructions';
 import { Layout } from './components/Layout';
+import { ModuleSwitcher, type AppModule } from './components/ModuleSwitcher';
 import { ResizeSplit } from './components/ResizeSplit';
 import { Sidebar } from './components/Sidebar';
+import { Tache1Trainer } from './components/Tache1Trainer';
 import { TaskDescription } from './components/TaskDescription';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { WritingEditor } from './components/WritingEditor';
@@ -216,6 +218,7 @@ export default function App() {
   const { settings: aiSettings, providerModels, updateSettings, clearSavedToken } = useAISettings();
   const { timeRemaining, hasStarted, isLocked, timerState, start, end } = useCountdownTimer();
   const editorRef = useActiveEditor();
+  const [activeModule, setActiveModule] = useState<AppModule>('simulation');
   const [isUppercase, setIsUppercase] = useState(false);
   const [selectedTaskItemIds, setSelectedTaskItemIds] = useState<TaskSelection>(() =>
     createInitialTaskSelection(taskBankItems),
@@ -420,14 +423,21 @@ export default function App() {
 
   if (!hasStarted) {
     return (
-      <GeneralInstructions
-        taskBankItems={taskBankItems}
-        selectedTaskItemIds={selectedTaskItemIds}
-        onStart={handleStartSimulation}
-        onSelectTaskItem={handleSelectTaskItem}
-        onRandomizeSelection={handleRandomizeTaskSelection}
-        onAddTask={addTaskBankItem}
-      />
+      <>
+        <ModuleSwitcher activeModule={activeModule} onChange={setActiveModule} />
+        {activeModule === 'simulation' ? (
+          <GeneralInstructions
+            taskBankItems={taskBankItems}
+            selectedTaskItemIds={selectedTaskItemIds}
+            onStart={handleStartSimulation}
+            onSelectTaskItem={handleSelectTaskItem}
+            onRandomizeSelection={handleRandomizeTaskSelection}
+            onAddTask={addTaskBankItem}
+          />
+        ) : (
+          <Tache1Trainer />
+        )}
+      </>
     );
   }
 
