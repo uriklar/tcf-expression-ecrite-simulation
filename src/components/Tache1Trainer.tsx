@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, RefreshCw, RotateCcw } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, ClipboardCopy, RefreshCw, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   tache1CategoryLabels,
@@ -91,6 +91,7 @@ export function Tache1Trainer() {
   const [visibleTemplates, setVisibleTemplates] = useState<VisibleTemplates>(hiddenTemplates);
   const [sections, setSections] = useState<WritingSections>(emptySections);
   const [showReview, setShowReview] = useState(false);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const relevantPhrases = useMemo(() => getAllRelevantPhrases(task), [task]);
   const fullAnswer = Object.values(sections).filter(Boolean).join('\n');
@@ -134,6 +135,41 @@ export function Tache1Trainer() {
         [section]: currentText ? `${currentText}\n${phrase}` : phrase,
       };
     });
+  }
+
+  function getExportText() {
+    const answer = (Object.keys(sectionLabels) as WritingSection[])
+      .map((section) => sections[section].trim())
+      .filter(Boolean)
+      .join('\n\n');
+
+    return `Tâche 1 — ${task.title}\n\nQuestion:\n${task.prompt}\n\nRéponse:\n${answer || '[Réponse vide]'}`;
+  }
+
+  async function handleCopyExport() {
+    const exportText = getExportText();
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(exportText);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = exportText;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      setExportStatus('copied');
+      window.setTimeout(() => setExportStatus('idle'), 1800);
+    } catch {
+      setExportStatus('error');
+      window.setTimeout(() => setExportStatus('idle'), 2500);
+    }
   }
 
   return (
@@ -267,10 +303,15 @@ export function Tache1Trainer() {
               <Check size={16} />
               Review my structure
             </button>
+            <button className="secondary-action" type="button" onClick={handleCopyExport}>
+              <ClipboardCopy size={16} />
+              {exportStatus === 'copied' ? 'Copied!' : 'Copy question + answer'}
+            </button>
             <button className="secondary-action" type="button" onClick={() => setSections(emptySections)}>
               <RotateCcw size={16} />
               Clear answer
             </button>
+            {exportStatus === 'error' ? <p className="trainer-feedback warn">Could not copy to clipboard.</p> : null}
           </div>
         </article>
 
