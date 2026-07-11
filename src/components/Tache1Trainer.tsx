@@ -1,4 +1,4 @@
-import { Check, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, RefreshCw, RotateCcw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   tache1CategoryLabels,
@@ -11,14 +11,16 @@ import {
 import { countWords } from '../utils/wordCount';
 
 const sectionLabels = {
-  opening: '1. Salutation',
+  opening: '1. Salutation / ouverture',
   purpose: '2. Pourquoi j’écris',
   details: '3. Détails obligatoires',
   reply: '4. Demander une réponse',
   closing: '5. Clôture',
 };
 
-type WritingSections = Record<keyof typeof sectionLabels, string>;
+type WritingSection = keyof typeof sectionLabels;
+type WritingSections = Record<WritingSection, string>;
+type VisibleTemplates = Record<WritingSection, boolean>;
 
 const emptySections: WritingSections = {
   opening: '',
@@ -26,6 +28,14 @@ const emptySections: WritingSections = {
   details: '',
   reply: '',
   closing: '',
+};
+
+const hiddenTemplates: VisibleTemplates = {
+  opening: false,
+  purpose: false,
+  details: false,
+  reply: false,
+  closing: false,
 };
 
 function normalizeText(value: string) {
@@ -40,69 +50,56 @@ function pickRandomTask(currentTaskId?: string) {
   return options[Math.floor(Math.random() * options.length)] ?? tache1TrainerTasks[0];
 }
 
-function shuffle<T>(items: T[]) {
-  return [...items].sort(() => Math.random() - 0.5);
+function getTaskSpecificCategories(task: Tache1TrainerTask): TemplatePhrase['category'][] {
+  if (task.category === 'invitation') return ['invitation', 'details'];
+  if (task.category === 'description' || task.category === 'announcement') return ['description', 'details'];
+  if (task.category === 'recommendation') return ['recommendation', 'details'];
+  if (task.category === 'request') return ['request', 'details'];
+  if (task.category === 'coordination') return ['details', 'request'];
+  if (task.category === 'complaint') return ['request', 'details'];
+  return ['details'];
 }
 
-function getRecallPhrases(task: Tache1TrainerTask) {
-  const categoryMap: Partial<Record<Tache1Category, TemplatePhrase['category'][]>> = {
-    invitation: ['invitation', 'details', 'reply'],
-    description: ['description', 'details', 'reply'],
-    recommendation: ['recommendation', 'details', 'reply'],
-    request: ['request', 'details', 'reply'],
-    coordination: ['details', 'request', 'reply'],
-    announcement: ['purpose', 'description', 'reply'],
-    complaint: ['purpose', 'details', 'request'],
+function getSectionTemplatePhrases(task: Tache1TrainerTask, section: WritingSection) {
+  const sectionCategories: Record<WritingSection, TemplatePhrase['category'][]> = {
+    opening: ['opening'],
+    purpose: ['purpose', ...(task.category === 'invitation' ? ['invitation' as const] : [])],
+    details: getTaskSpecificCategories(task),
+    reply: ['reply'],
+    closing: ['closing'],
   };
 
-  const targetCategories = ['opening', ...(categoryMap[task.category] ?? []), 'closing'];
-  const phrases = targetCategories
-    .map((category) => tache1TemplatePhrases.find((phrase) => phrase.category === category))
-    .filter((phrase): phrase is TemplatePhrase => Boolean(phrase));
-
-  return phrases.slice(0, 5);
+  const allowedCategories = new Set(sectionCategories[section]);
+  return tache1TemplatePhrases.filter((phrase) => allowedCategories.has(phrase.category));
 }
 
-function getPhraseSuggestions(task: Tache1TrainerTask) {
-  const recallPhraseIds = new Set(getRecallPhrases(task).map((phrase) => phrase.id));
-  const relevantCategories = new Set<TemplatePhrase['category']>([
-    'opening',
-    'purpose',
-    'details',
-    'reply',
-    'closing',
-  ]);
+function getAllRelevantPhrases(task: Tache1TrainerTask) {
+  const sections = Object.keys(sectionLabels) as WritingSection[];
+  const phraseMap = new Map<string, TemplatePhrase>();
 
-  if (task.category === 'invitation') relevantCategories.add('invitation');
-  if (task.category === 'description' || task.category === 'announcement') relevantCategories.add('description');
-  if (task.category === 'recommendation') relevantCategories.add('recommendation');
-  if (task.category === 'request' || task.category === 'coordination' || task.category === 'complaint') {
-    relevantCategories.add('request');
-  }
+  sections.forEach((section) => {
+    getSectionTemplatePhrases(task, section).forEach((phrase) => phraseMap.set(phrase.id, phrase));
+  });
 
-  return tache1TemplatePhrases.filter(
-    (phrase) => recallPhraseIds.has(phrase.id) || relevantCategories.has(phrase.category),
-  );
+  return [...phraseMap.values()];
 }
 
 export function Tache1Trainer() {
   const [task, setTask] = useState<Tache1TrainerTask>(() => pickRandomTask());
   const [selectedCategory, setSelectedCategory] = useState<Tache1Category | ''>('');
   const [checkedDetails, setCheckedDetails] = useState<string[]>([]);
-  const [recallAnswers, setRecallAnswers] = useState<Record<string, string>>({});
-  const [showPhraseBank, setShowPhraseBank] = useState(false);
+  const [visibleTemplates, setVisibleTemplates] = useState<VisibleTemplates>(hiddenTemplates);
   const [sections, setSections] = useState<WritingSections>(emptySections);
   const [showReview, setShowReview] = useState(false);
 
-  const recallPhrases = useMemo(() => getRecallPhrases(task), [task]);
-  const phraseSuggestions = useMemo(() => getPhraseSuggestions(task), [task]);
+  const relevantPhrases = useMemo(() => getAllRelevantPhrases(task), [task]);
   const fullAnswer = Object.values(sections).filter(Boolean).join('\n');
   const wordCount = countWords(fullAnswer);
   const normalizedAnswer = normalizeText(fullAnswer);
   const includedDetails = task.requiredDetails.filter((detail) =>
     detail.keywords.some((keyword) => normalizedAnswer.includes(normalizeText(keyword))),
   );
-  const usedPhrases = phraseSuggestions.filter((phrase) => normalizedAnswer.includes(normalizeText(phrase.french)));
+  const usedPhrases = relevantPhrases.filter((phrase) => normalizedAnswer.includes(normalizeText(phrase.french)));
   const completedSections = Object.values(sections).filter((value) => value.trim().length > 0).length;
   const isWordCountOk = wordCount >= 60 && wordCount <= 120;
 
@@ -110,8 +107,7 @@ export function Tache1Trainer() {
     setTask(nextTask);
     setSelectedCategory('');
     setCheckedDetails([]);
-    setRecallAnswers({});
-    setShowPhraseBank(false);
+    setVisibleTemplates(hiddenTemplates);
     setSections(emptySections);
     setShowReview(false);
   }
@@ -122,8 +118,22 @@ export function Tache1Trainer() {
     );
   }
 
-  function updateSection(section: keyof WritingSections, value: string) {
+  function toggleSectionTemplates(section: WritingSection) {
+    setVisibleTemplates((current) => ({ ...current, [section]: !current[section] }));
+  }
+
+  function updateSection(section: WritingSection, value: string) {
     setSections((current) => ({ ...current, [section]: value }));
+  }
+
+  function addPhraseToSection(section: WritingSection, phrase: string) {
+    setSections((current) => {
+      const currentText = current[section].trimEnd();
+      return {
+        ...current,
+        [section]: currentText ? `${currentText}\n${phrase}` : phrase,
+      };
+    });
   }
 
   return (
@@ -131,10 +141,9 @@ export function Tache1Trainer() {
       <section className="trainer-hero">
         <div>
           <p className="eyebrow">Tâche 1 Trainer</p>
-          <h1>Build the message, memorize the template</h1>
+          <h1>Template builder</h1>
           <p>
-            Decode the prompt, recall sentence starters, then assemble a clean 60–120 word answer with the exam
-            structure.
+            Decode the prompt, open the sentence bank for each paragraph, and assemble a clean 60–120 word answer.
           </p>
         </div>
         <button className="secondary-action" type="button" onClick={() => resetForTask(pickRandomTask(task.id))}>
@@ -183,7 +192,7 @@ export function Tache1Trainer() {
           {selectedCategory ? (
             <p className={selectedCategory === task.category ? 'trainer-feedback ok' : 'trainer-feedback warn'}>
               {selectedCategory === task.category
-                ? 'Correct — now use phrases that fit this function.'
+                ? 'Correct — the builder will show templates for this message type.'
                 : `Close, but this one is mainly: ${tache1CategoryLabels[task.category]}.`}
             </p>
           ) : null}
@@ -203,75 +212,54 @@ export function Tache1Trainer() {
           </div>
         </article>
 
-        <article className="trainer-card">
-          <p className="eyebrow">Étape 2 · Recall</p>
-          <h2>Complete the template phrases</h2>
-          <div className="trainer-recall-list">
-            {recallPhrases.map((phrase) => {
-              const answer = recallAnswers[phrase.id] ?? '';
-              const isCorrect = normalizeText(answer.trim()) === normalizeText(phrase.french);
-
-              return (
-                <label key={phrase.id} className="trainer-recall-item">
-                  <span>{phrase.cloze}</span>
-                  <input
-                    value={answer}
-                    placeholder="Type the full phrase from memory"
-                    onChange={(event) =>
-                      setRecallAnswers((current) => ({ ...current, [phrase.id]: event.target.value }))
-                    }
-                  />
-                  {answer ? (
-                    <small className={isCorrect ? 'trainer-feedback ok' : 'trainer-feedback muted'}>
-                      {isCorrect ? 'Exact ✅' : `Target: ${phrase.french}`}
-                    </small>
-                  ) : null}
-                </label>
-              );
-            })}
-          </div>
-        </article>
-
         <article className="trainer-card trainer-writing-card">
           <div className="trainer-card-header">
             <div>
-              <p className="eyebrow">Étape 3 · Write</p>
+              <p className="eyebrow">Étape 2 · Template builder</p>
               <h2>Guided answer builder</h2>
             </div>
             <span className={isWordCountOk ? 'trainer-pill ok' : 'trainer-pill'}>{wordCount} mots</span>
           </div>
 
-          <button className="secondary-action trainer-bank-toggle" type="button" onClick={() => setShowPhraseBank((v) => !v)}>
-            <Sparkles size={16} />
-            {showPhraseBank ? 'Masquer les phrases' : 'Afficher les phrases utiles'}
-          </button>
-
-          {showPhraseBank ? (
-            <div className="trainer-phrase-bank">
-              {phraseSuggestions.map((phrase) => (
-                <button
-                  key={phrase.id}
-                  type="button"
-                  onClick={() => navigator.clipboard?.writeText(phrase.french)}
-                  title="Copy phrase"
-                >
-                  {phrase.french}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
           <div className="trainer-section-list">
-            {(Object.keys(sectionLabels) as (keyof WritingSections)[]).map((section) => (
-              <label key={section} className="trainer-section">
-                <span>{sectionLabels[section]}</span>
-                <textarea
-                  value={sections[section]}
-                  rows={section === 'details' ? 5 : 2}
-                  onChange={(event) => updateSection(section, event.target.value)}
-                />
-              </label>
-            ))}
+            {(Object.keys(sectionLabels) as WritingSection[]).map((section) => {
+              const phrases = getSectionTemplatePhrases(task, section);
+              return (
+                <div key={section} className="trainer-section-block">
+                  <div className="trainer-section-topline">
+                    <label className="trainer-section" htmlFor={`trainer-section-${section}`}>
+                      <span>{sectionLabels[section]}</span>
+                    </label>
+                    <button
+                      className="trainer-template-toggle"
+                      type="button"
+                      onClick={() => toggleSectionTemplates(section)}
+                    >
+                      {visibleTemplates[section] ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                      {visibleTemplates[section] ? 'Masquer les modèles' : 'Voir les modèles'}
+                    </button>
+                  </div>
+
+                  {visibleTemplates[section] ? (
+                    <div className="trainer-phrase-bank section-bank">
+                      {phrases.map((phrase) => (
+                        <button key={phrase.id} type="button" onClick={() => addPhraseToSection(section, phrase.french)}>
+                          <strong>{phrase.french}</strong>
+                          <small>{phrase.english}</small>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <textarea
+                    id={`trainer-section-${section}`}
+                    value={sections[section]}
+                    rows={section === 'details' ? 6 : 2}
+                    onChange={(event) => updateSection(section, event.target.value)}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="trainer-actions">
@@ -287,7 +275,7 @@ export function Tache1Trainer() {
         </article>
 
         <article className="trainer-card">
-          <p className="eyebrow">Étape 4 · Checklist</p>
+          <p className="eyebrow">Étape 3 · Checklist</p>
           <h2>Exam-ready check</h2>
           <ul className="trainer-checklist">
             <li className={completedSections === 5 ? 'done' : ''}>5/5 message sections completed</li>
