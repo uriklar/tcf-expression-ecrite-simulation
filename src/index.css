@@ -1616,3 +1616,82 @@ textarea:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.trainer-section-block {
+  display: grid;
+  gap: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px;
+}
+
+.trainer-section-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trainer-template-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #f9fafb;
+  color: #374151;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.trainer-template-toggle:hover,
+.trainer-template-toggle:focus-visible {
+  border-color: #111827;
+  color: #111827;
+}
+
+.trainer-section-block textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111827;
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.trainer-section-block textarea:focus {
+  border-color: #111827;
+  box-shadow: 0 0 0 1px #111827;
+}
+
+.section-bank {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.section-bank button {
+  display: grid;
+  gap: 4px;
+}
+
+.section-bank small {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .section-bank {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer-section-topline {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
