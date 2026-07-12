@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AISettingsPanel } from './components/AISettingsPanel';
 import { GeneralInstructions } from './components/GeneralInstructions';
+import { GrammarLessons } from './components/GrammarLessons';
 import { Layout } from './components/Layout';
 import { ModuleSwitcher, type AppModule } from './components/ModuleSwitcher';
 import { ResizeSplit } from './components/ResizeSplit';
@@ -440,8 +441,10 @@ export default function App() {
           <Tache1Trainer />
         ) : activeModule === 'tache2-trainer' ? (
           <Tache2Trainer />
-        ) : (
+        ) : activeModule === 'tache3-trainer' ? (
           <Tache3Trainer />
+        ) : (
+          <GrammarLessons />
         )}
       </>
     );
