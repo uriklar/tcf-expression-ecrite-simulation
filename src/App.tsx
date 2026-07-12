@@ -6,6 +6,7 @@ import { ModuleSwitcher, type AppModule } from './components/ModuleSwitcher';
 import { ResizeSplit } from './components/ResizeSplit';
 import { Sidebar } from './components/Sidebar';
 import { Tache1Trainer } from './components/Tache1Trainer';
+import { Tache2Trainer } from './components/Tache2Trainer';
 import { TaskDescription } from './components/TaskDescription';
 import { VirtualKeyboard } from './components/VirtualKeyboard';
 import { WritingEditor } from './components/WritingEditor';
@@ -434,8 +435,10 @@ export default function App() {
             onRandomizeSelection={handleRandomizeTaskSelection}
             onAddTask={addTaskBankItem}
           />
-        ) : (
+        ) : activeModule === 'tache1-trainer' ? (
           <Tache1Trainer />
+        ) : (
+          <Tache2Trainer />
         )}
       </>
     );
