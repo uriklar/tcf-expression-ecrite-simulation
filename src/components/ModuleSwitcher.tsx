@@ -1,4 +1,4 @@
-export type AppModule = 'simulation' | 'tache1-trainer' | 'tache2-trainer';
+export type AppModule = 'simulation' | 'tache1-trainer' | 'tache2-trainer' | 'tache3-trainer';
 
 type ModuleSwitcherProps = {
   activeModule: AppModule;
@@ -34,6 +34,15 @@ export function ModuleSwitcher({ activeModule, onChange }: ModuleSwitcherProps) 
         onClick={() => onChange('tache2-trainer')}
       >
         Trainer Tâche 2
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeModule === 'tache3-trainer'}
+        className={activeModule === 'tache3-trainer' ? 'module-tab module-tab-active' : 'module-tab'}
+        onClick={() => onChange('tache3-trainer')}
+      >
+        Trainer Tâche 3
       </button>
     </div>
   );

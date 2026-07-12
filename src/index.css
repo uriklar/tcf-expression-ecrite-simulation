@@ -1705,3 +1705,27 @@ textarea:disabled {
   line-height: 1.45;
   opacity: 0.82;
 }
+
+.trainer-doc-view-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.trainer-doc-view-grid div {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 12px;
+}
+
+.trainer-doc-view-grid strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.trainer-doc-view-grid p {
+  margin: 6px 0 0;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.5;
+}
