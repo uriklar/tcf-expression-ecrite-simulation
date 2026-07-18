@@ -1,3 +1,5 @@
+import { januaryTache1TrainerTasks } from './januaryTrainerTasks';
+
 export type Tache1Category =
   | 'invitation'
   | 'description'
@@ -121,7 +123,7 @@ export const tache1TemplatePhrases: TemplatePhrase[] = [
   { id: 'closing-day', category: 'closing', french: 'Bonne journée,', english: 'Have a good day,', cloze: 'Bonne ___,' },
 ]
 
-export const tache1TrainerTasks: Tache1TrainerTask[] = [
+const legacyTache1TrainerTasks: Tache1TrainerTask[] = [
   {
     id: 'jan-1-university',
     title: 'Nouvelle université',
@@ -262,3 +264,5 @@ export const tache1TrainerTasks: Tache1TrainerTask[] = [
     ],
   },
 ];
+
+export const tache1TrainerTasks: Tache1TrainerTask[] = januaryTache1TrainerTasks;

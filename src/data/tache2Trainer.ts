@@ -1,3 +1,5 @@
+import { januaryTache2TrainerTasks } from './januaryTrainerTasks';
+
 export type Tache2Category =
   | 'blog-experience'
   | 'forum-recommendation'
@@ -83,7 +85,7 @@ export const tache2TemplatePhrases: Tache2TemplatePhrase[] = [
   { id: 'concl-impact', section: 'conclusion', category: 'learning', french: 'Cette expérience a changé ma façon de voir [sujet] et m’a donné envie de [action].', english: 'This experience changed the way I see [topic] and made me want to [action].' },
 ];
 
-export const tache2TrainerTasks: Tache2TrainerTask[] = [
+const legacyTache2TrainerTasks: Tache2TrainerTask[] = [
   {
     id: 'pdf-hike-banff',
     title: 'Randonnée guidée',
@@ -225,3 +227,5 @@ export const tache2TrainerTasks: Tache2TrainerTask[] = [
     ],
   },
 ];
+
+export const tache2TrainerTasks: Tache2TrainerTask[] = januaryTache2TrainerTasks;

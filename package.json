@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
+    "verify:task-bank": "node scripts/verify-january-task-bank.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "debug:openai": "node scripts/debug-openai.mjs"
   },

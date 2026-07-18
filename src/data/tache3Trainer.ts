@@ -1,3 +1,5 @@
+import { januaryTache3TrainerTasks } from './januaryTrainerTasks';
+
 export type Tache3Position = 'balanced-positive' | 'balanced-negative' | 'support' | 'oppose' | 'nuanced';
 
 export type Tache3Section = 'title' | 'synthesis' | 'position';
@@ -74,7 +76,7 @@ export const tache3TemplatePhrases: Tache3TemplatePhrase[] = [
   { id: 'concl-final', section: 'position', category: 'conclusion', french: 'En définitive, cette réflexion montre qu’un équilibre entre avantages et contraintes est indispensable.', english: 'Ultimately, this reflection shows that a balance between benefits and constraints is essential.' },
 ];
 
-export const tache3TrainerTasks: Tache3TrainerTask[] = [
+const legacyTache3TrainerTasks: Tache3TrainerTask[] = [
   {
     id: 'pdf-pets-family',
     title: 'La présence d’un animal domestique en famille',
@@ -204,3 +206,5 @@ export const tache3TrainerTasks: Tache3TrainerTask[] = [
     ],
   },
 ];
+
+export const tache3TrainerTasks: Tache3TrainerTask[] = januaryTache3TrainerTasks;
