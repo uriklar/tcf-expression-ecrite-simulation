@@ -129,7 +129,7 @@ export function TaskAdminPanel({
               >
                 {taskItems.map((item, index) => (
                   <option value={item.id} key={item.id}>
-                    {index + 1}. {summarizePrompt(item.prompt)}
+                    {index + 1}. {item.label ?? summarizePrompt(item.prompt)}
                   </option>
                 ))}
               </select>

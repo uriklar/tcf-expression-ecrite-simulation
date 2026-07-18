@@ -1,4 +1,7 @@
 import type { TaskBankItem, TaskSlotId, WritingTask } from "../types";
+import { tache1TrainerTasks } from "./tache1Trainer";
+import { tache2TrainerTasks } from "./tache2Trainer";
+import { tache3TrainerTasks } from "./tache3Trainer";
 
 export const taskIds: TaskSlotId[] = [1, 2, 3];
 
@@ -206,9 +209,30 @@ Chasse aux animaux : une pratique à soutenir ou à rejeter ?`,
   ],
 };
 
-export const defaultTaskBankItems = taskIds.flatMap(
-  (taskId) => questionBank[taskId],
-);
+export const defaultTaskBankItems: TaskBankItem[] = [
+  ...tache1TrainerTasks.map((task) => ({
+    id: `trainer-1-${task.id}`,
+    taskId: 1 as const,
+    label: task.title,
+    prompt: task.prompt,
+  })),
+  ...tache2TrainerTasks.map((task) => ({
+    id: `trainer-2-${task.id}`,
+    taskId: 2 as const,
+    label: task.title,
+    prompt: task.prompt,
+  })),
+  ...tache3TrainerTasks.map((task) => ({
+    id: `trainer-3-${task.id}`,
+    taskId: 3 as const,
+    label: task.title,
+    prompt: task.prompt,
+    documents: [
+      { label: "Document 1", text: task.document1 },
+      { label: "Document 2", text: task.document2 },
+    ],
+  })),
+];
 
 export function createInitialTasks(
   taskItems: TaskBankItem[] = defaultTaskBankItems,
@@ -216,6 +240,7 @@ export function createInitialTasks(
   return taskIds.map((taskId) => {
     const taskBankItem =
       taskItems.find((item) => item.taskId === taskId) ??
+      defaultTaskBankItems.find((item) => item.taskId === taskId) ??
       questionBank[taskId][0];
 
     return {

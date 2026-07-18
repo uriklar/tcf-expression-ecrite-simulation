@@ -20,7 +20,7 @@ export function TaskPreviewModal({ task, onClose }: TaskPreviewModalProps) {
         <div className="task-preview-header">
           <div>
             <p className="eyebrow">{getTaskSlotLabel(task.taskId)}</p>
-            <h2 id="task-preview-title">Consigne complète</h2>
+            <h2 id="task-preview-title">{task.label ?? 'Consigne complète'}</h2>
           </div>
           <button className="icon-button" type="button" onClick={onClose} aria-label="Fermer l’aperçu">
             <X size={17} />

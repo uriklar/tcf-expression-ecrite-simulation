@@ -16,6 +16,7 @@ export type TaskDocument = {
 export type TaskBankItem = {
   id: string;
   taskId: TaskSlotId;
+  label?: string;
   prompt: string;
   documents?: TaskDocument[];
   createdAt?: string;

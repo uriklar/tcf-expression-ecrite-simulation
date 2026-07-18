@@ -34,6 +34,7 @@ function readCustomTasks() {
       return (
         typeof item?.id === 'string' &&
         isTaskSlotId(item.taskId) &&
+        (typeof item.label === 'undefined' || typeof item.label === 'string') &&
         typeof item.prompt === 'string' &&
         (!documents ||
           (Array.isArray(documents) &&
